@@ -10,7 +10,7 @@ const PAGE_STEP = 10;
 
 /**
  * Pointer, wheel and keyboard input for a 0–127 control: drag right or up to raise, ⇧ for fine,
- * double-click to reset to the detent or default, arrows/Page/Home/End when focused. A drag undoes as one step.
+ * double-click to reset to the default, arrows/Page/Home/End when focused. A drag undoes as one step.
  */
 export function useValueDrag<T extends HTMLElement>(param: ParamDef, value: number, onChange: (value: number) => void) {
   const drag = useRef<{ x: number; y: number; value: number } | null>(null);
@@ -65,7 +65,7 @@ export function useValueDrag<T extends HTMLElement>(param: ParamDef, value: numb
     onPointerUp: endDrag,
     onPointerCancel: endDrag,
     onDoubleClick() {
-      change(param.detent ?? param.default);
+      change(param.default);
     },
     onKeyDown(e: KeyboardEvent<T>) {
       const steps: Record<string, number> = {

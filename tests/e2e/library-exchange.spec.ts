@@ -38,7 +38,7 @@ test.describe('without folder access', () => {
     await expect(drawer.getByRole('button', { name: 'Choose folder…' })).toHaveCount(0);
     await expect(drawer.getByRole('status', { name: 'Back up your Library' })).toHaveCount(0);
 
-    await editor.getByRole('slider', { name: 'EQ', exact: true }).press('PageUp');
+    await editor.getByRole('slider', { name: 'Vol 1', exact: true }).press('PageUp');
     await saveAs(page, 'Shimmer Tape');
     await expect(presets.getByRole('button', { name: /^Recall/ })).toHaveText(['Shimmer Tape']);
 
@@ -62,7 +62,7 @@ test.describe('without folder access', () => {
     await expect(drawer.getByRole('status', { name: 'Import' })).toContainText('0 added · 1 already in the Library');
 
     await drawer.getByRole('button', { name: 'Recall Shimmer Tape' }).click();
-    await expect(page.getByRole('region', { name: 'Virtual Pedal' }).getByLabel('EQ', { exact: true })).toHaveText('74');
+    await expect(page.getByRole('region', { name: 'Virtual Pedal' }).getByLabel('Vol 1', { exact: true })).toHaveText('74');
   });
 });
 
@@ -83,10 +83,10 @@ test.describe('with a Library folder', () => {
     const names = presets.getByRole('button', { name: /^Recall/ });
     await drawer.getByRole('button', { name: 'Choose folder…' }).click();
 
-    await editor.getByRole('slider', { name: 'EQ', exact: true }).press('PageUp');
+    await editor.getByRole('slider', { name: 'Vol 1', exact: true }).press('PageUp');
     await saveAs(page, 'Ambience');
     await drawer.getByRole('button', { name: 'New' }).click();
-    await editor.getByRole('slider', { name: 'Dry' }).press('PageDown');
+    await editor.getByRole('slider', { name: 'Tone 1' }).press('PageDown');
     await saveAs(page, 'Echo');
     await expect(names).toHaveText(['Ambience', 'Echo']);
 
@@ -110,7 +110,7 @@ test.describe('with a Library folder', () => {
     // Echo changed since the export: importing again skips Ambience and asks about Echo.
     const workingState = page.getByRole('banner', { name: 'Connection' }).getByLabel('Working State');
     await drawer.getByRole('button', { name: 'Recall Echo' }).click();
-    await editor.getByRole('slider', { name: 'EQ', exact: true }).press('PageUp');
+    await editor.getByRole('slider', { name: 'Vol 1', exact: true }).press('PageUp');
     await expect(workingState).toHaveText('Echo •');
     await drawer.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(workingState).toHaveText('Echo');

@@ -42,11 +42,3 @@ export function defaultGlobalSettings(): GlobalSettings {
 export function defaultPedalState(): PedalState {
   return defaultsOf<ParamId>();
 }
-
-/** The Hidden Options. Ramp Speed is grouped with them but set by a knob while ramping, so it isn't one. */
-const HIDDEN_OPTIONS = Object.values(PARAMS).filter((p: ParamDef) => p.group === 'hidden' && p.id !== PARAMS.rampSpeed.id);
-
-/** `state` after a Factory Reset (CC 56): every Hidden Option back to its default, everything else as it was. */
-export function withHiddenOptionsReset<S extends WorkingState | PedalState>(state: S): S {
-  return { ...state, ...Object.fromEntries(HIDDEN_OPTIONS.map((p) => [p.id, p.default])) };
-}

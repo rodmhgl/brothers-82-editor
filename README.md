@@ -6,7 +6,7 @@ A free, open-source editor and controller for the Brothers 82 two-channel drive 
 
 ## Status
 
-In development, towards the v1 feature set in [SPEC.md](SPEC.md) §1. The repo currently holds the Clean editor under its new name, so the controls are still Clean's. Forked from the Clean editor (commit `5f5a381`, see [ADR 0001](docs/adr/0001-fork-clean-editor.md)). The domain glossary is [CONTEXT.md](CONTEXT.md). Every [hardware check](docs/hardware-checks.md) must be resolved on a real pedal before release.
+In development, towards the v1 feature set in [SPEC.md](SPEC.md) §1. The main panel and MIDI map are the Brothers 82's; other tickets on the v1 list are in progress. Forked from the Clean editor (commit `5f5a381`, see [ADR 0001](docs/adr/0001-fork-clean-editor.md)). The domain glossary is [CONTEXT.md](CONTEXT.md). Every [hardware check](docs/hardware-checks.md) must be resolved on a real pedal before release.
 
 ## Try it
 

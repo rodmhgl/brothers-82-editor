@@ -35,7 +35,7 @@ test('save, edit and recall round-trip the Working State and the Virtual Pedal',
   const pedal = page.getByRole('region', { name: 'Virtual Pedal' });
   const drawer = page.getByRole('complementary', { name: 'Data' });
   const presets = drawer.getByRole('list', { name: 'Presets' });
-  const release = editor.getByRole('group', { name: 'Release' });
+  const ampType = editor.getByRole('group', { name: 'Amp Type' });
 
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('tab', { name: 'Library' }).click();
@@ -44,10 +44,10 @@ test('save, edit and recall round-trip the Working State and the Virtual Pedal',
   await expect(workingState).toHaveText('Untitled');
 
   // Edit, then Save: the Working State has no Preset yet, so Save asks for a name.
-  await release.getByRole('radio', { name: 'Fast' }).check();
-  await editor.getByRole('slider', { name: 'EQ', exact: true }).press('PageUp');
-  await editor.getByRole('button', { name: 'Swell', exact: true }).click();
-  await page.getByRole('region', { name: 'Dip switches' }).getByRole('switch', { name: 'Dusty' }).press('Space');
+  await ampType.getByRole('radio', { name: '800' }).check();
+  await editor.getByRole('slider', { name: 'Vol 1', exact: true }).press('PageUp');
+  await editor.getByRole('button', { name: 'Channel 1 Bypass', exact: true }).press('Space');
+  await page.getByRole('region', { name: 'Dip switches' }).getByRole('switch', { name: 'Master' }).press('Space');
   await expect(workingState).toHaveText('Untitled •');
   await drawer.getByRole('button', { name: 'Save', exact: true }).click();
   await drawer.getByRole('form', { name: 'Save As' }).getByLabel('Preset name').fill('Shimmer Tape');
@@ -55,28 +55,28 @@ test('save, edit and recall round-trip the Working State and the Virtual Pedal',
 
   await expect(workingState).toHaveText('Shimmer Tape');
   await expect(presets.getByRole('listitem')).toHaveCount(1);
-  await expect(presets.getByLabel('Customize dips')).toHaveText('Dusty');
+  await expect(presets.getByLabel('Customize dips')).toHaveText('Master');
   const file = await readPresetFile(page, 'shimmer-tape.cleanpreset.json');
   expect(file).toMatchObject({ format: 'clean-preset', schemaVersion: 1, name: 'Shimmer Tape' });
-  expect(file.params).toMatchObject({ release: 1, eq: 74, swell: 127, dusty: 127 });
+  expect(file.params).toMatchObject({ ampType: 1, vol1: 74, channel1Bypass: 127, master: 127 });
   expect(file.params).not.toHaveProperty('expression');
 
   // Further edits mark it modified; New replaces it with the defaults.
-  await editor.getByRole('slider', { name: 'EQ', exact: true }).press('PageUp');
+  await editor.getByRole('slider', { name: 'Vol 1', exact: true }).press('PageUp');
   await expect(workingState).toHaveText('Shimmer Tape •');
   await drawer.getByRole('button', { name: 'New' }).click();
   await expect(workingState).toHaveText('Untitled');
-  await expect(pedal.getByLabel('EQ', { exact: true })).toHaveText('64');
-  await expect(pedal.getByLabel('Swell LED')).toHaveText('Off');
+  await expect(pedal.getByLabel('Vol 1', { exact: true })).toHaveText('64');
+  await expect(pedal.getByLabel('Channel 1 Bypass LED')).toHaveText('Off');
 
   // Recall brings back the saved Working State, not the unsaved edit, and sends it.
   await presets.getByRole('button', { name: 'Recall Shimmer Tape' }).click();
   await expect(workingState).toHaveText('Shimmer Tape');
-  await expect(editor.getByRole('slider', { name: 'EQ', exact: true })).toHaveAttribute('aria-valuenow', '74');
-  await expect(release.getByRole('radio', { name: 'Fast' })).toBeChecked();
-  await expect(pedal.getByLabel('EQ', { exact: true })).toHaveText('74');
-  await expect(pedal.getByLabel('Swell LED')).toHaveText('On');
-  await expect(pedal.getByLabel('Release')).toHaveText('Fast');
+  await expect(editor.getByRole('slider', { name: 'Vol 1', exact: true })).toHaveAttribute('aria-valuenow', '74');
+  await expect(ampType.getByRole('radio', { name: '800' })).toBeChecked();
+  await expect(pedal.getByLabel('Vol 1', { exact: true })).toHaveText('74');
+  await expect(pedal.getByLabel('Channel 1 Bypass LED')).toHaveText('On');
+  await expect(pedal.getByLabel('Amp Type')).toHaveText('800');
   await expect(connection.getByLabel('Sync Status')).toHaveText('In Sync');
 });
 
@@ -107,30 +107,4 @@ test('Rename, Duplicate and Delete change the Library folder', async ({ page }) 
   await presets.getByRole('button', { name: 'Delete Glass Choir copy? Click again' }).click();
   await expect(presets.getByRole('button', { name: /^Recall/ })).toHaveText(['Glass Choir']);
   expect(await listFiles(page)).toEqual(['glass-choir.cleanpreset.json']);
-});
-
-test('the Factory Presets are listed before any folder is chosen, and recall and duplicate', async ({ page }) => {
-  await page.goto('/');
-  const workingState = page.getByRole('banner', { name: 'Connection' }).getByLabel('Working State');
-  const pedal = page.getByRole('region', { name: 'Virtual Pedal' });
-  const drawer = page.getByRole('complementary', { name: 'Data' });
-  const factory = drawer.getByRole('list', { name: 'Factory', exact: true });
-
-  await page.getByRole('button', { name: /^Data/ }).click();
-  await drawer.getByRole('tab', { name: 'Library' }).click();
-  await expect(factory.getByRole('button', { name: /^Recall / })).toHaveText(['Factory Left', 'Factory Right']);
-  await expect(factory.getByRole('button', { name: 'Duplicate Factory Left' })).toBeDisabled();
-  await expect(factory.getByRole('button', { name: 'Rename Factory Left' })).toHaveCount(0);
-  await expect(factory.getByRole('button', { name: 'Delete Factory Left' })).toHaveCount(0);
-
-  await factory.getByRole('button', { name: 'Recall Factory Right' }).click();
-  await expect(workingState).toContainText('Factory Right');
-  await expect(pedal.getByLabel('Mode')).toHaveText('Modulated');
-
-  await drawer.getByRole('button', { name: 'Choose folder…' }).click();
-  await factory.getByRole('button', { name: 'Duplicate Factory Left' }).click();
-  await expect(drawer.getByRole('list', { name: 'Presets' }).getByRole('button', { name: /^Recall / })).toHaveText([
-    'Factory Left copy',
-  ]);
-  expect(await listFiles(page)).toEqual(['factory-left-copy.cleanpreset.json']);
 });

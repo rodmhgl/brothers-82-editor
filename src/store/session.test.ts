@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultWorkingState } from '../model/state';
 import { DEFAULT_SETTINGS, SESSION_VERSION, THEMES, parseSession, type Session } from './session';
 
-const working = { ...defaultWorkingState(), sensitivity: 100, release: 3 };
+const working = { ...defaultWorkingState(), vol2: 100, ampType: 3 };
 
 const saved: Session = {
   version: SESSION_VERSION,
@@ -40,9 +40,9 @@ describe('parseSession', () => {
   });
 
   it('normalises the Working State as a Preset file would be: defaults for missing params, values clamped', () => {
-    const { sensitivity: _, ...rest } = working;
-    const session = parseSession({ ...stored(saved), working: { ...rest, release: 9, nonsense: 1 } })!;
-    expect(session.working).toEqual({ ...working, sensitivity: defaultWorkingState().sensitivity, release: 3 });
+    const { vol2: _, ...rest } = working;
+    const session = parseSession({ ...stored(saved), working: { ...rest, ampType: 9, nonsense: 1 } })!;
+    expect(session.working).toEqual({ ...working, vol2: defaultWorkingState().vol2, ampType: 3 });
     expect(session.working).not.toHaveProperty('nonsense');
   });
 
@@ -56,11 +56,11 @@ describe('parseSession', () => {
       6: 'junk',
       7: { slot: 7, name: 'No snapshot', writtenAt: 'y' },
       // Stored from no Preset.
-      8: { slot: 8, snapshot: { ...working, sensitivity: 500 }, name: 'Untitled', writtenAt: 'z' },
+      8: { slot: 8, snapshot: { ...working, vol2: 500 }, name: 'Untitled', writtenAt: 'z' },
     };
     expect(parseSession({ ...stored(saved), slotMap })!.slotMap).toEqual({
       5: saved.slotMap[5],
-      8: { slot: 8, snapshot: { ...working, sensitivity: 127 }, name: 'Untitled', writtenAt: 'z' },
+      8: { slot: 8, snapshot: { ...working, vol2: 127 }, name: 'Untitled', writtenAt: 'z' },
     });
   });
 

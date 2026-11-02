@@ -18,24 +18,7 @@ test('the MIDI channel wizard sets the pedal and the editor to the chosen MIDI c
 
   await expect(page.getByRole('banner').getByLabel('MIDI channel')).toHaveValue('5');
   await expect(global.getByLabel('MIDI channel')).toHaveText('CH 05');
-  await page.getByRole('region', { name: 'Editor' }).getByRole('slider', { name: 'Sensitivity' }).focus();
+  await page.getByRole('region', { name: 'Editor' }).getByRole('slider', { name: 'Vol 2' }).focus();
   await page.keyboard.press('ArrowUp');
-  await expect(log.getByRole('listitem').last()).toHaveText(/^CC 15 = \d+ → Sensitivity$/);
-});
-
-test('Factory Reset confirms, then resets the Hidden Options on the pedal', async ({ page }) => {
-  await page.goto('/');
-  const global = page.getByRole('region', { name: 'Global Settings' });
-  const log = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log');
-  const confirm = page.getByRole('dialog', { name: 'Factory Reset' });
-
-  await global.getByRole('button', { name: 'Factory Reset…' }).click();
-  await confirm.getByRole('button', { name: 'Cancel' }).click();
-  await expect(confirm).toHaveCount(0);
-  await expect(log.getByText('Factory Reset')).toHaveCount(0);
-
-  await global.getByRole('button', { name: 'Factory Reset…' }).click();
-  await confirm.getByRole('button', { name: 'Reset Hidden Options' }).click();
-  await expect(confirm).toHaveCount(0);
-  await expect(log.getByRole('listitem').last()).toHaveText('CC 56 = 127 → Factory Reset → Hidden Options back to defaults');
+  await expect(log.getByRole('listitem').last()).toHaveText(/^CC 15 = \d+ → Vol 2$/);
 });

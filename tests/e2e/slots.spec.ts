@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('the rail and the Slot grid show the two Toggle Slots and no Bank; a factory Toggle Slot recalls as Unknown', async ({ page }) => {
+test('the rail and the Slot grid show the two Toggle Slots and no Bank; a Toggle Slot with no Slot Map entry recalls as Unknown', async ({ page }) => {
   await page.goto('/');
   const rail = page.getByRole('navigation', { name: 'Slots' });
   const drawer = page.getByRole('complementary', { name: 'Data' });
@@ -27,7 +27,6 @@ test('the rail and the Slot grid show the two Toggle Slots and no Bank; a factor
   await expect(drawer.getByText('Toggle Slots 1–2')).toBeVisible();
   await expect(page.getByText(/Bank/)).toHaveCount(0);
 
-  // The factory presets in Slots 1 and 2 aren't in the Slot Map (hardware check #7).
   await page.getByRole('button', { name: 'Send All', exact: true }).click();
   await expect(syncStatus).toHaveText('In Sync');
   await rail.getByRole('button', { name: 'Recall Slot 1 · Toggle Right' }).click();
@@ -39,7 +38,7 @@ test('store and recall a Slot against the Virtual Pedal, re-storing once its Pre
   const connection = page.getByRole('banner', { name: 'Connection' });
   const syncStatus = connection.getByLabel('Sync Status');
   const editor = page.getByRole('region', { name: 'Editor' });
-  const eq = editor.getByRole('slider', { name: 'EQ', exact: true });
+  const vol1 = editor.getByRole('slider', { name: 'Vol 1', exact: true });
   const pedal = page.getByRole('region', { name: 'Virtual Pedal' });
   const log = pedal.getByRole('log');
   const rail = page.getByRole('navigation', { name: 'Slots' });
@@ -49,7 +48,7 @@ test('store and recall a Slot against the Virtual Pedal, re-storing once its Pre
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('tab', { name: 'Library' }).click();
   await drawer.getByRole('button', { name: 'Choose folder…' }).click();
-  await eq.press('PageUp');
+  await vol1.press('PageUp');
   await drawer.getByRole('button', { name: 'Save', exact: true }).click();
   await drawer.getByRole('form', { name: 'Save As' }).getByLabel('Preset name').fill('Shimmer Tape');
   await drawer.getByRole('button', { name: 'OK' }).click();
@@ -75,13 +74,13 @@ test('store and recall a Slot against the Virtual Pedal, re-storing once its Pre
   await expect(syncStatus).toHaveText('Possibly Stale');
 
   // Edit, then recall Slot 7: the Working State becomes its snapshot, In Sync, on both editor and pedal.
-  await eq.press('PageUp');
-  await expect(eq).toHaveAttribute('aria-valuenow', '84');
+  await vol1.press('PageUp');
+  await expect(vol1).toHaveAttribute('aria-valuenow', '84');
   await rail.getByRole('button', { name: /^Recall Slot 7 ·/ }).click();
   await expect(log.getByRole('listitem').last()).toHaveText('PC 7 → recall Slot 7');
   await expect(syncStatus).toHaveText('In Sync');
-  await expect(eq).toHaveAttribute('aria-valuenow', '74');
-  await expect(pedal.getByLabel('EQ', { exact: true })).toHaveText('74');
+  await expect(vol1).toHaveAttribute('aria-valuenow', '74');
+  await expect(pedal.getByLabel('Vol 1', { exact: true })).toHaveText('74');
   await expect(connection.getByLabel('Working State')).toHaveText('Shimmer Tape');
 
   // An unknown Slot: Unknown.
@@ -89,18 +88,18 @@ test('store and recall a Slot against the Virtual Pedal, re-storing once its Pre
   await expect(syncStatus).toHaveText('Unknown');
 
   // Change the Preset: the Slot shows it, and one click re-stores it.
-  await eq.press('PageUp');
+  await vol1.press('PageUp');
   await drawer.getByRole('tab', { name: 'Library' }).click();
   await drawer.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(rail.getByRole('button', { name: /^Recall Slot 7 · MIDI only · Shimmer Tape, changed since stored$/ })).toBeVisible();
   await drawer.getByRole('tab', { name: 'Slots' }).click();
   await drawer.getByRole('button', { name: /^Slot 7 ·/ }).click();
   // Re-store loads the Preset, so with unsaved edits it asks first.
-  await eq.press('PageUp');
+  await vol1.press('PageUp');
   await drawer.getByRole('button', { name: 'Re-store' }).click();
   await drawer.getByRole('button', { name: 'Discard unsaved edits? Click again' }).click();
   await expect(log.getByRole('listitem').last()).toHaveText('CC 111 = 7 → stored in Slot 7');
-  await expect(eq).toHaveAttribute('aria-valuenow', '84');
+  await expect(vol1).toHaveAttribute('aria-valuenow', '84');
   await expect(rail.getByRole('button', { name: 'Recall Slot 7 · MIDI only · Shimmer Tape' })).toBeVisible();
   await expect(drawer.getByRole('button', { name: 'Re-store' })).toHaveCount(0);
 });

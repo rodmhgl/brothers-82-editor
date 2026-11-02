@@ -48,7 +48,7 @@ function memoryStorage(initial?: unknown) {
   };
 }
 
-const working = { ...defaultWorkingState(), sensitivity: 100 };
+const working = { ...defaultWorkingState(), vol2: 100 };
 const session: Session = {
   version: SESSION_VERSION,
   working,
@@ -101,10 +101,10 @@ describe('startSession', () => {
     const memory = memoryStorage(session);
     await startSession(memory.storage, stores);
 
-    stores.editor.getState().setParam('sensitivity', 3);
+    stores.editor.getState().setParam('vol2', 3);
     await vi.runAllTimersAsync();
 
-    expect(memory.saved.at(-1)?.working.sensitivity).toBe(3);
+    expect(memory.saved.at(-1)?.working.vol2).toBe(3);
   });
 });
 
@@ -113,7 +113,7 @@ describe('keepSession', () => {
     const memory = memoryStorage();
     keepSession(memory.storage, stores);
 
-    stores.editor.getState().setParam('sensitivity', 42);
+    stores.editor.getState().setParam('vol2', 42);
     stores.editor.getState().setMidiChannel(9);
     stores.editor.getState().setInput('in-1');
     stores.editor.getState().setSendThrottleMs(12);
@@ -124,7 +124,7 @@ describe('keepSession', () => {
     const last = memory.saved.at(-1)!;
     expect(parseSession(JSON.parse(JSON.stringify(last)))).toEqual(last);
     expect(last).toMatchObject({
-      working: { sensitivity: 42 },
+      working: { vol2: 42 },
       midiChannel: 9,
       inputId: 'in-1',
       source: { presetId: 'p-2', name: 'Drone' },
@@ -148,10 +148,10 @@ describe('keepSession', () => {
     keepSession(memory.storage, stores);
     memory.hold();
 
-    for (const sensitivity of [1, 2, 3, 4]) stores.editor.getState().setParam('sensitivity', sensitivity);
+    for (const vol2 of [1, 2, 3, 4]) stores.editor.getState().setParam('vol2', vol2);
     await memory.flush();
 
-    expect(memory.saved.map((s) => s.working.sensitivity)).toEqual([1, 4]);
+    expect(memory.saved.map((s) => s.working.vol2)).toEqual([1, 4]);
   });
 
   it('keeps going after a save fails', async () => {
@@ -162,16 +162,16 @@ describe('keepSession', () => {
         load: async () => undefined,
         async save(s) {
           if (fail) throw new Error('quota');
-          saved.push(s.working.sensitivity);
+          saved.push(s.working.vol2);
         },
       },
       stores,
     );
 
-    stores.editor.getState().setParam('sensitivity', 1);
+    stores.editor.getState().setParam('vol2', 1);
     await vi.runAllTimersAsync();
     fail = false;
-    stores.editor.getState().setParam('sensitivity', 2);
+    stores.editor.getState().setParam('vol2', 2);
     await vi.runAllTimersAsync();
 
     expect(saved).toEqual([2]);

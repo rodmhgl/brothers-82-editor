@@ -16,9 +16,7 @@ export type SyncEvent =
   /** A Slot recalled that the Slot Map has no entry for. */
   | 'recallUnknown'
   /** A whole new Working State (a recalled Preset, or New): the pedal lags behind it until Send All finishes. */
-  | 'loaded'
-  /** Factory Reset: the editor follows it, but can't tell whether it changed a recalled Slot's sound. */
-  | 'factoryReset';
+  | 'loaded';
 
 export const SYNC_STATUS_LABELS: Record<SyncStatus, string> = {
   inSync: 'In Sync',
@@ -41,7 +39,6 @@ export function nextSyncStatus(status: SyncStatus, event: SyncEvent): SyncStatus
     // Working State.
     case 'live':
     case 'loaded':
-    case 'factoryReset':
       return 'possiblyStale';
     case 'edit':
       // A single edit only fixes one control, so it can never earn trust it didn't have.

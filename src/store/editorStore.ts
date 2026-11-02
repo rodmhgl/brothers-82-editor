@@ -13,7 +13,7 @@ import type { WorkingState } from '../model/state';
 import { logSent, type SentMessage } from './monitor';
 import { DEFAULT_SETTINGS, type Session } from './session';
 
-/** How long the Test button holds Bypass the other way, so the LED change is visible. */
+/** How long the Test button holds Channel 2 Bypass the other way, so the LED change is visible. */
 const TEST_HOLD_MS = 600;
 
 /** Continuous controls send at most one message per this many ms each (SPEC.md §5.11). */
@@ -77,11 +77,6 @@ type EditorStore = {
   storeSlot(slot: number, origin: SlotOrigin, working?: WorkingState): Promise<boolean>;
   /** Sends PC 0: the pedal follows its physical controls, which the editor can't read. Clears the undo history. */
   goLive(): void;
-  /**
-   * Sends Factory Reset (CC 56): the Hidden Options go back to their defaults on the pedal and in the Working State.
-   * Slots are untouched. The UI confirms first. Clears the undo history; Possibly Stale.
-   */
-  factoryReset(): void;
   /**
    * The MIDI channel wizard's power-up step is done by hand on a real pedal. The Virtual Pedal has no power
    * lead to pull, so this simulates it there.
@@ -257,9 +252,6 @@ export function createEditorStore(virtualPedal: VirtualPedal, deps: EditorDeps =
       goLive() {
         apply({ type: 'live' });
       },
-      factoryReset() {
-        apply({ type: 'factoryReset' });
-      },
       pedalPoweredUpForMidiChannel() {
         if (get().isOutputVirtual()) virtualPedal.powerUpHoldingBothFootswitches();
       },
@@ -323,10 +315,10 @@ export function createEditorStore(virtualPedal: VirtualPedal, deps: EditorDeps =
       },
       async test() {
         const { setParam } = get();
-        const bypass = get().editor.working.bypass;
-        setParam('bypass', switchValue(PARAMS.bypass, !isOn(bypass)), { undoable: false });
+        const bypass = get().editor.working.channel2Bypass;
+        setParam('channel2Bypass', switchValue(PARAMS.channel2Bypass, !isOn(bypass)), { undoable: false });
         await sleep(TEST_HOLD_MS);
-        setParam('bypass', bypass, { undoable: false });
+        setParam('channel2Bypass', bypass, { undoable: false });
       },
       connectWebMidi() {
         webMidiRequest ??= requestAndListen();

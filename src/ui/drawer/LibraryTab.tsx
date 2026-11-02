@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FACTORY_PRESETS } from '../../model/factoryPresets';
-import { MAX_NAME_LENGTH, type Preset } from '../../model/schema';
+import { MAX_NAME_LENGTH } from '../../model/schema';
 import { customizeSummary } from '../../model/summary';
 import {
   MODIFIED_HELP,
@@ -227,22 +226,6 @@ export function LibraryTab() {
         </details>
       )}
 
-      <h3 className="preset-group">Factory</h3>
-      <ul className="preset-list" aria-label="Factory">
-        {FACTORY_PRESETS.map((preset) => (
-          <FactoryPresetRow
-            key={preset.id}
-            preset={preset}
-            current={preset.id === source.presetId}
-            canDuplicate={reachable}
-            onRecall={() => runFileAction(() => recall(preset.id))}
-            onDuplicate={() => runFileAction(() => duplicate(preset.id))}
-            onExport={() => exportPreset(preset.id)}
-          />
-        ))}
-      </ul>
-
-      {folderName && <h3 className="preset-group">Your Presets</h3>}
       {folderName && (
         <ul className="preset-list" aria-label="Presets">
           {presets.length === 0 && (
@@ -351,61 +334,6 @@ function PresetRow(props: {
         onClick={clickDelete}
       >
         {armed ? 'Delete? Click again' : 'Delete'}
-      </button>
-    </li>
-  );
-}
-
-/** A built-in Preset: recalled, duplicated or exported, never renamed or deleted. */
-function FactoryPresetRow(props: {
-  preset: Preset;
-  current: boolean;
-  /** Duplicate writes a new Preset, so it needs a Library to write it to. */
-  canDuplicate: boolean;
-  onRecall(): void;
-  onDuplicate(): void;
-  onExport(): void;
-}) {
-  const { preset } = props;
-  const summary = customizeSummary(preset.params);
-  return (
-    <li className={`preset-row${props.current ? ' is-active' : ''}`} aria-current={props.current ? 'true' : undefined}>
-      <div className="preset-main">
-        <button
-          type="button"
-          className="preset-name"
-          aria-label={`Recall ${preset.name}`}
-          title={`Makes ${preset.name} the Working State and sends it to the pedal.`}
-          onClick={props.onRecall}
-        >
-          {preset.name}
-        </button>
-        {summary && (
-          <div className="preset-summary" aria-label="Customize dips">
-            {summary}
-          </div>
-        )}
-        <div className="preset-notes">{preset.notes}</div>
-        <div className="preset-dates">Built in · read-only</div>
-      </div>
-      <button
-        type="button"
-        className="text-button"
-        aria-label={`Duplicate ${preset.name}`}
-        disabled={!props.canDuplicate}
-        title={props.canDuplicate ? 'Writes an editable copy to your Library.' : 'Choose a Library to copy it into first.'}
-        onClick={props.onDuplicate}
-      >
-        Duplicate
-      </button>
-      <button
-        type="button"
-        className="text-button"
-        aria-label={`Export ${preset.name}`}
-        title="Saves this Preset as a file to share or keep."
-        onClick={props.onExport}
-      >
-        Export
       </button>
     </li>
   );

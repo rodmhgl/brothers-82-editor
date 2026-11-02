@@ -1,6 +1,5 @@
 import { controlChange, programChange, type MidiMessage } from '../midi/encode';
 import {
-  FACTORY_RESET_CC,
   LIVE_PROGRAM,
   PARAMS,
   SAVE_TO_SLOT_CC,
@@ -18,7 +17,6 @@ import {
   defaultGlobalSettings,
   defaultPerformanceState,
   defaultWorkingState,
-  withHiddenOptionsReset,
   type GlobalSettings,
   type PerformanceState,
   type WorkingState,
@@ -57,8 +55,6 @@ export type EditorAction =
   | { type: 'live' }
   /** Save to Slot, CC 111 = n. Send All first, so the pedal holds the Working State. */
   | { type: 'store'; slot: number; origin: SlotOrigin; writtenAt: string }
-  /** Factory Reset, CC 56: the Hidden Options go back to their defaults. Slots are untouched. */
-  | { type: 'factoryReset' }
   /** MIDI from elsewhere (Raw MIDI, Pass-through): sent unchanged, followed as the pedal would read it. */
   | { type: 'forward'; bytes: MidiMessage }
   /**
@@ -139,8 +135,6 @@ export function dispatch(state: EditorState, action: EditorAction): CoreResult {
       };
       return { state: { ...state, slotMap: recordStore(state.slotMap, entry) }, messages: [controlChange(state.global.midiChannel, SAVE_TO_SLOT_CC, slot)] };
     }
-    case 'factoryReset':
-      return { state: factoryReset(state), messages: [controlChange(state.global.midiChannel, FACTORY_RESET_CC, 127)] };
     case 'forward':
       return { state: follow(state, action.bytes), messages: [action.bytes] };
     case 'receive':
@@ -175,10 +169,6 @@ function follow(state: EditorState, bytes: MidiMessage): EditorState {
     case 'store':
       // The editor can't be sure what the pedal held, so it no longer knows what the Slot does.
       return { ...state, slotMap: forgetSlot(state.slotMap, reading.slot) };
-    case 'factoryReset':
-      return factoryReset(state);
-    // Holding AUX is momentary and stores nothing.
-    case 'auxHold':
     case 'ignored':
     case 'unmapped':
     case 'noSuchSlot':
@@ -224,14 +214,6 @@ function recall(state: EditorState, slot: number): EditorState {
 /** The pedal follows its physical controls, which replace its whole state, so earlier steps no longer apply. */
 function live(state: EditorState): EditorState {
   return sync({ ...state, history: history.EMPTY_HISTORY }, 'live');
-}
-
-/**
- * The pedal's Live Hidden Options are back to their defaults, and so are the Working State's. Slots are untouched, so
- * the Slot Map stands. Undoing an earlier edit would send one CC into the reset state, so earlier steps no longer apply.
- */
-function factoryReset(state: EditorState): EditorState {
-  return sync({ ...state, working: withHiddenOptionsReset(state.working), history: history.EMPTY_HISTORY }, 'factoryReset');
 }
 
 function sync(state: EditorState, event: SyncEvent): EditorState {

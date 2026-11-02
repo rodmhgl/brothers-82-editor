@@ -33,11 +33,11 @@ describe('shortcutFor', () => {
     expect(shortcutFor(key('z', { ctrlKey: true, repeat: true }), PC)).toEqual({ type: 'undo' });
   });
 
-  it('maps ⌘S, ⌘E and ⌘H (Ctrl elsewhere)', () => {
+  it('maps ⌘S and ⌘E (Ctrl elsewhere)', () => {
     expect(shortcutFor(key('s', { metaKey: true }), MAC)).toEqual({ type: 'save' });
     expect(shortcutFor(key('e', { metaKey: true }), MAC)).toEqual({ type: 'sendAll' });
     expect(shortcutFor(key('r', { metaKey: true }), MAC)).toBeNull();
-    expect(shortcutFor(key('h', { metaKey: true }), MAC)).toEqual({ type: 'hiddenOptions' });
+    expect(shortcutFor(key('h', { metaKey: true }), MAC)).toBeNull();
     expect(shortcutFor(key('S', { ctrlKey: true }), PC)).toEqual({ type: 'save' });
     expect(shortcutFor(key('e', { ctrlKey: true }), PC)).toEqual({ type: 'sendAll' });
   });
@@ -47,31 +47,31 @@ describe('shortcutFor', () => {
     expect(shortcutFor(key('r', { ctrlKey: true, repeat: true }), PC)).toBeNull();
   });
 
-  it('has no number-key shortcuts: Clean has no toggle keys', () => {
-    for (const digit of ['1', '3', '6']) expect(shortcutFor(key(digit), PC)).toBeNull();
-  });
-
   it('opens Help with ?', () => {
     expect(shortcutFor(key('?', { shiftKey: true }), PC)).toEqual({ type: 'help' });
     expect(shortcutFor(key('?', { ctrlKey: true }), PC)).toBeNull();
   });
 
-  it('toggles Bypass with B and Swell with W', () => {
-    expect(shortcutFor(key('b'), PC)).toEqual({ type: 'bypass' });
-    expect(shortcutFor(key('B', { shiftKey: true }), PC)).toEqual({ type: 'bypass' });
-    expect(shortcutFor(key('w'), MAC)).toEqual({ type: 'swell' });
+  it('toggles Channel 1 Bypass with 1 and Channel 2 Bypass with 2', () => {
+    expect(shortcutFor(key('1'), PC)).toEqual({ type: 'channel1Bypass' });
+    expect(shortcutFor(key('2'), MAC)).toEqual({ type: 'channel2Bypass' });
   });
 
-  it('leaves B and W alone with a modifier or while held', () => {
-    expect(shortcutFor(key('b', { metaKey: true }), MAC)).toBeNull();
-    expect(shortcutFor(key('w', { ctrlKey: true }), PC)).toBeNull();
-    expect(shortcutFor(key('b', { altKey: true }), PC)).toBeNull();
-    expect(shortcutFor(key('w', { repeat: true }), PC)).toBeNull();
+  it('leaves 1 and 2 alone with a modifier or while held, and maps no other digit', () => {
+    expect(shortcutFor(key('1', { metaKey: true }), MAC)).toBeNull();
+    expect(shortcutFor(key('2', { ctrlKey: true }), PC)).toBeNull();
+    expect(shortcutFor(key('1', { altKey: true }), PC)).toBeNull();
+    expect(shortcutFor(key('2', { repeat: true }), PC)).toBeNull();
+    expect(shortcutFor(key('3'), PC)).toBeNull();
+  });
+
+  it('has no Clean footswitch keys', () => {
+    for (const letter of ['b', 'w']) expect(shortcutFor(key(letter), PC)).toBeNull();
   });
 
   it('lists every shortcut for Help', () => {
-    expect(SHORTCUTS.map((s) => s.keys(MAC))).toEqual(['⌘S', '⌘Z', '⇧⌘Z', 'B', 'W', '⌘E', '⌘H', '?']);
-    expect(SHORTCUTS.map((s) => s.keys(PC))).toEqual(['Ctrl+S', 'Ctrl+Z', 'Ctrl+Shift+Z', 'B', 'W', 'Ctrl+E', 'Ctrl+H', '?']);
+    expect(SHORTCUTS.map((s) => s.keys(MAC))).toEqual(['⌘S', '⌘Z', '⇧⌘Z', '1', '2', '⌘E', '?']);
+    expect(SHORTCUTS.map((s) => s.keys(PC))).toEqual(['Ctrl+S', 'Ctrl+Z', 'Ctrl+Shift+Z', '1', '2', 'Ctrl+E', '?']);
   });
 
   it('ignores other keys and modifiers', () => {

@@ -69,14 +69,14 @@ describe('Send All', () => {
     const { setMidiChannel, setParam } = useEditorStore.getState();
     // Edits on MIDI channel 5 never reach the Virtual Pedal (it listens on 2), so it drifts.
     setMidiChannel(5);
-    setParam('sidechain', 127);
-    setParam('physics', 3);
-    setParam('mode', 1);
-    setParam('attack', 90);
-    setParam('bypass', 0);
+    setParam('motoByp2', 127);
+    setParam('odType', 3);
+    setParam('effectOrder', 1);
+    setParam('tone2', 90);
+    setParam('channel2Bypass', 0);
     setMidiChannel(2);
     await vi.runAllTimersAsync();
-    expect(virtualPedal.getSnapshot().state.sidechain).toBe(0);
+    expect(virtualPedal.getSnapshot().state.motoByp2).toBe(0);
     expect(useEditorStore.getState().editor.sync).toBe('possiblyStale');
 
     const before = virtualPedal.getSnapshot().log.length;
@@ -109,26 +109,26 @@ describe('Send All', () => {
 
   it('sends values edited while it is under way, not the ones it started with', async () => {
     const done = useEditorStore.getState().sendAll();
-    useEditorStore.getState().setParam('bypass', 0);
+    useEditorStore.getState().setParam('channel2Bypass', 0);
     await vi.runAllTimersAsync();
     await done;
 
-    expect(virtualPedal.getSnapshot().state.bypass).toBe(0);
+    expect(virtualPedal.getSnapshot().state.channel2Bypass).toBe(0);
   });
 });
 
 describe('the Test button', () => {
-  it('flips Bypass, then puts it back, so the LED changes and returns', async () => {
+  it('flips Channel 2 Bypass, then puts it back, so the LED changes and returns', async () => {
     const before = virtualPedal.getSnapshot().log.length;
     const done = useEditorStore.getState().test();
     await vi.runAllTimersAsync();
     await done;
 
     expect(virtualPedal.getSnapshot().log.slice(before).map((e) => e.text)).toEqual([
-      'CC 102 = 0 → Bypass → Off',
-      'CC 102 = 127 → Bypass → On',
+      'CC 103 = 0 → Channel 2 Bypass → Bypassed',
+      'CC 103 = 127 → Channel 2 Bypass → Engaged',
     ]);
-    expect(useEditorStore.getState().editor.working.bypass).toBe(127);
+    expect(useEditorStore.getState().editor.working.channel2Bypass).toBe(127);
   });
 });
 
@@ -139,11 +139,11 @@ describe('Sync Status in the editor', () => {
 
   it('is not changed by single edits', () => {
     setSyncStatus('inSync');
-    useEditorStore.getState().setParam('sensitivity', 3);
+    useEditorStore.getState().setParam('vol2', 3);
     expect(useEditorStore.getState().editor.sync).toBe('inSync');
 
     setSyncStatus('unknown');
-    useEditorStore.getState().setParam('mode', 3);
+    useEditorStore.getState().setParam('effectOrder', 3);
     expect(useEditorStore.getState().editor.sync).toBe('unknown');
   });
 });
@@ -215,7 +215,7 @@ describe('connecting an output', () => {
 });
 
 describe('restoring the last session', () => {
-  const working = { ...defaultWorkingState(), sensitivity: 100, release: 3 };
+  const working = { ...defaultWorkingState(), vol2: 100, ampType: 3 };
   const session: Session = {
     version: SESSION_VERSION,
     working,
@@ -250,11 +250,11 @@ describe('restoring the last session', () => {
     await vi.runAllTimersAsync();
 
     expect(fake.output.send).toHaveBeenCalledTimes(sendAllOrder().length);
-    expect(fake.output.send).toHaveBeenCalledWith(controlChange(2, PARAMS.sensitivity.cc, 100));
+    expect(fake.output.send).toHaveBeenCalledWith(controlChange(2, PARAMS.vol2.cc, 100));
     expect(useEditorStore.getState().editor.sync).toBe('inSync');
 
     fake.play([0xb1, 17, 90]);
-    expect(useEditorStore.getState().editor.working.attack).toBe(90);
+    expect(useEditorStore.getState().editor.working.tone2).toBe(90);
   });
 
   it('paces Send All by the send throttle', async () => {
@@ -271,15 +271,15 @@ describe('continuous sends', () => {
     const before = virtualPedal.getSnapshot().log.length;
     const { setParam } = useEditorStore.getState();
 
-    for (let v = 10; v < 20; v++) setParam('sensitivity', v);
-    setParam('eq', 1);
+    for (let v = 10; v < 20; v++) setParam('vol2', v);
+    setParam('vol1', 1);
     expect(loggedCcs(before)).toEqual(['15', '18']);
 
     await vi.advanceTimersByTimeAsync(5);
     expect(virtualPedal.getSnapshot().log.slice(before).map((e) => e.text)).toEqual([
-      'CC 15 = 10 → Sensitivity',
-      'CC 18 = 1 → EQ',
-      'CC 15 = 19 → Sensitivity',
+      'CC 15 = 10 → Vol 2',
+      'CC 18 = 1 → Vol 1',
+      'CC 15 = 19 → Vol 2',
     ]);
   });
 
@@ -287,10 +287,10 @@ describe('continuous sends', () => {
     const before = virtualPedal.getSnapshot().log.length;
     const { setParam } = useEditorStore.getState();
 
-    setParam('swell', 127);
-    setParam('swell', 0);
+    setParam('channel1Bypass', 127);
+    setParam('channel1Bypass', 0);
 
-    expect(loggedCcs(before)).toEqual(['103', '103']);
+    expect(loggedCcs(before)).toEqual(['102', '102']);
   });
 });
 
@@ -303,16 +303,6 @@ describe('Slots', () => {
     await vi.runAllTimersAsync();
     return done;
   }
-
-  it('Factory Reset sends CC 56 and keeps the Slot Map', async () => {
-    expect(await store(9)).toBe(true);
-    const slotMap = useEditorStore.getState().editor.slotMap;
-
-    useEditorStore.getState().factoryReset();
-
-    expect(virtualPedal.getSnapshot().log.at(-1)?.text).toBe('CC 56 = 127 → Factory Reset → Hidden Options back to defaults');
-    expect(useEditorStore.getState().editor).toMatchObject({ slotMap, sync: 'possiblyStale' });
-  });
 
   it('recalls a Slot the Slot Map doesn’t know with PC n, making the Sync Status Unknown', () => {
     const { recallSlot } = useEditorStore.getState();
@@ -334,7 +324,7 @@ describe('Slots', () => {
   });
 
   it('records what it stored in the Slot Map, with its source Preset and when', async () => {
-    useEditorStore.getState().setParam('sensitivity', 90);
+    useEditorStore.getState().setParam('vol2', 90);
 
     await store(9);
 
@@ -355,7 +345,7 @@ describe('Slots', () => {
   });
 
   it('can store a given Working State instead, which becomes the Working State', async () => {
-    const working = { ...useEditorStore.getState().editor.working, eq: 20 };
+    const working = { ...useEditorStore.getState().editor.working, vol1: 20 };
 
     const done = useEditorStore.getState().storeSlot(9, shimmer, working);
     await vi.runAllTimersAsync();
@@ -363,7 +353,7 @@ describe('Slots', () => {
 
     expect(useEditorStore.getState().editor.working).toEqual(working);
     expect(useEditorStore.getState().editor.slotMap[9]?.snapshot).toEqual(working);
-    expect(virtualPedal.getSnapshot().state.eq).toBe(20);
+    expect(virtualPedal.getSnapshot().state.vol1).toBe(20);
     expect(loggedCcs(0).filter((cc) => cc === '111')).toHaveLength(1);
   });
 
@@ -378,17 +368,17 @@ describe('Slots', () => {
   });
 
   it('recalling a Slot the Slot Map knows makes its snapshot the Working State, In Sync', async () => {
-    useEditorStore.getState().setParam('sensitivity', 90);
+    useEditorStore.getState().setParam('vol2', 90);
     await store(9);
-    useEditorStore.getState().setParam('sensitivity', 10);
+    useEditorStore.getState().setParam('vol2', 10);
     useEditorStore.getState().recallSlot(10);
 
     useEditorStore.getState().recallSlot(9);
 
     expect(useEditorStore.getState()).toMatchObject({ selectedSlot: 9, editor: { sync: 'inSync' } });
-    expect(useEditorStore.getState().editor.working.sensitivity).toBe(90);
+    expect(useEditorStore.getState().editor.working.vol2).toBe(90);
     // The Virtual Pedal recalls the same thing on its own.
-    expect(virtualPedal.getSnapshot().state.sensitivity).toBe(90);
+    expect(virtualPedal.getSnapshot().state.vol2).toBe(90);
   });
 
   it('Live sends PC 0 and makes the Sync Status Possibly Stale', () => {
@@ -410,13 +400,6 @@ describe('Slots', () => {
 });
 
 describe('Performance Controls', () => {
-  it('Ramping sends CC 52 and stays out of the Working State', () => {
-    useEditorStore.getState().setParam('ramping', 127);
-
-    expect(virtualPedal.getSnapshot().log.at(-1)?.text).toBe('CC 52 = 127 → Ramping → On');
-    expect(useEditorStore.getState().editor.performance.ramping).toBe(127);
-  });
-
   it('Expression sends CC 100 at most once per 5 ms, always the final value, and stays out of the Working State', async () => {
     const { setParam } = useEditorStore.getState();
     const working = useEditorStore.getState().editor.working;
@@ -445,8 +428,8 @@ describe('MIDI channel', () => {
 
     expect(virtualPedal.getSnapshot().log.at(-1)?.text).toBe('PC 0 on MIDI channel 7 → MIDI channel set to 7');
     expect(useEditorStore.getState()).toMatchObject({ editor: { global: { midiChannel: 7 }, sync: 'possiblyStale' } });
-    useEditorStore.getState().setParam('sensitivity', 10);
-    expect(virtualPedal.getSnapshot().state.sensitivity).toBe(10);
+    useEditorStore.getState().setParam('vol2', 10);
+    expect(virtualPedal.getSnapshot().state.vol2).toBe(10);
   });
 });
 
@@ -454,9 +437,9 @@ describe('MIDI Monitor', () => {
   it('logs every outgoing message newest first, one row per CC while it repeats', async () => {
     const { setParam, recallSlot, clearSent } = useEditorStore.getState();
 
-    setParam('sensitivity', 10);
-    setParam('release', 2);
-    setParam('release', 3);
+    setParam('vol2', 10);
+    setParam('ampType', 2);
+    setParam('ampType', 3);
     recallSlot(4);
     await vi.runAllTimersAsync();
 
@@ -473,21 +456,21 @@ describe('MIDI Monitor', () => {
 describe('undo/redo', () => {
   it('undoes and redoes Working State edits, sending each result to the pedal', async () => {
     const { setParam } = useEditorStore.getState();
-    setParam('mode', 2);
-    setParam('sidechain', 127);
+    setParam('effectOrder', 2);
+    setParam('motoByp2', 127);
     await vi.runAllTimersAsync();
 
     useEditorStore.getState().undo();
-    expect(useEditorStore.getState().editor.working.sidechain).toBe(PARAMS.sidechain.default);
-    expect(virtualPedal.getSnapshot().state.sidechain).toBe(PARAMS.sidechain.default);
+    expect(useEditorStore.getState().editor.working.motoByp2).toBe(PARAMS.motoByp2.default);
+    expect(virtualPedal.getSnapshot().state.motoByp2).toBe(PARAMS.motoByp2.default);
     useEditorStore.getState().undo();
-    expect(virtualPedal.getSnapshot().state.mode).toBe(PARAMS.mode.default);
+    expect(virtualPedal.getSnapshot().state.effectOrder).toBe(PARAMS.effectOrder.default);
     expect(useEditorStore.getState().canUndo).toBe(false);
 
     useEditorStore.getState().redo();
     useEditorStore.getState().redo();
-    expect(virtualPedal.getSnapshot().state.mode).toBe(2);
-    expect(virtualPedal.getSnapshot().state.sidechain).toBe(127);
+    expect(virtualPedal.getSnapshot().state.effectOrder).toBe(2);
+    expect(virtualPedal.getSnapshot().state.motoByp2).toBe(127);
     expect(useEditorStore.getState().canRedo).toBe(false);
   });
 
@@ -501,22 +484,20 @@ describe('undo/redo', () => {
   it('undoes a knob drag as one step, after its last throttled value has gone out', async () => {
     const { beginGesture, endGesture, setParam } = useEditorStore.getState();
     beginGesture();
-    for (let v = 65; v <= 100; v++) setParam('sensitivity', v);
+    for (let v = 65; v <= 100; v++) setParam('vol2', v);
     endGesture();
     useEditorStore.getState().undo();
     await vi.runAllTimersAsync();
 
-    expect(useEditorStore.getState().editor.working.sensitivity).toBe(PARAMS.sensitivity.default);
-    expect(virtualPedal.getSnapshot().state.sensitivity).toBe(PARAMS.sensitivity.default);
+    expect(useEditorStore.getState().editor.working.vol2).toBe(PARAMS.vol2.default);
+    expect(virtualPedal.getSnapshot().state.vol2).toBe(PARAMS.vol2.default);
     expect(useEditorStore.getState().canUndo).toBe(false);
   });
 
   it('leaves Global Settings and Performance Controls alone', () => {
     const s = useEditorStore.getState();
-    s.setParam('sensitivity', 100);
+    s.setParam('vol2', 100);
     s.setMidiChannel(5);
-    s.setParam('dynamicsMax', 127);
-    s.setParam('ramping', 127);
     s.setParam('expression', 10);
 
     useEditorStore.getState().undo();
@@ -524,15 +505,15 @@ describe('undo/redo', () => {
       editor: { working, global, performance },
       canUndo,
     } = useEditorStore.getState();
-    expect(working.sensitivity).toBe(PARAMS.sensitivity.default);
+    expect(working.vol2).toBe(PARAMS.vol2.default);
     expect(global.midiChannel).toBe(5);
-    expect(performance).toEqual({ dynamicsMax: 127, expression: 10, ramping: 127 });
+    expect(performance).toEqual({ expression: 10 });
     expect(canUndo).toBe(false);
   });
 
   it('starts afresh when a whole new Working State is loaded', async () => {
-    useEditorStore.getState().setParam('sensitivity', 100);
-    const done = useEditorStore.getState().loadWorking({ ...useEditorStore.getState().editor.working, eq: 20 });
+    useEditorStore.getState().setParam('vol2', 100);
+    const done = useEditorStore.getState().loadWorking({ ...useEditorStore.getState().editor.working, vol1: 20 });
     await vi.runAllTimersAsync();
     await done;
     expect(useEditorStore.getState().canUndo).toBe(false);
@@ -540,8 +521,8 @@ describe('undo/redo', () => {
 
   it('starts afresh when a Slot is recalled', () => {
     const s = useEditorStore.getState();
-    s.setParam('sensitivity', 100);
-    s.setParam('eq', 20);
+    s.setParam('vol2', 100);
+    s.setParam('vol1', 20);
     s.undo();
     expect(useEditorStore.getState().canRedo).toBe(true);
 
@@ -551,7 +532,7 @@ describe('undo/redo', () => {
   });
 
   it('starts afresh on going Live', () => {
-    useEditorStore.getState().setParam('sensitivity', 100);
+    useEditorStore.getState().setParam('vol2', 100);
 
     useEditorStore.getState().goLive();
 
@@ -559,7 +540,7 @@ describe('undo/redo', () => {
   });
 
   it('starts afresh when the MIDI channel wizard goes Live', () => {
-    useEditorStore.getState().setParam('sensitivity', 100);
+    useEditorStore.getState().setParam('vol2', 100);
 
     useEditorStore.getState().setPedalMidiChannel(7);
 
@@ -570,7 +551,7 @@ describe('undo/redo', () => {
     const done = useEditorStore.getState().test();
     await vi.runAllTimersAsync();
     await done;
-    useEditorStore.getState().forward(controlChange(2, PARAMS.sensitivity.cc, 3));
+    useEditorStore.getState().forward(controlChange(2, PARAMS.vol2.cc, 3));
     expect(useEditorStore.getState().canUndo).toBe(false);
   });
 });
@@ -578,7 +559,7 @@ describe('undo/redo', () => {
 describe('Raw MIDI Program Change', () => {
   /** Makes an undoable edit, so a cleared history shows. */
   function editMix() {
-    useEditorStore.getState().setParam('sensitivity', 100);
+    useEditorStore.getState().setParam('vol2', 100);
     expect(useEditorStore.getState().canUndo).toBe(true);
   }
 
@@ -595,18 +576,18 @@ describe('Raw MIDI Program Change', () => {
   });
 
   it('PC n recalling a Slot the Slot Map knows makes its snapshot the Working State, In Sync', async () => {
-    useEditorStore.getState().setParam('sensitivity', 90);
+    useEditorStore.getState().setParam('vol2', 90);
     const stored = useEditorStore.getState().storeSlot(9, { presetId: null, name: 'Untitled' });
     await vi.runAllTimersAsync();
     await stored;
-    useEditorStore.getState().setParam('sensitivity', 10);
+    useEditorStore.getState().setParam('vol2', 10);
     useEditorStore.setState({ selectedSlot: 2 });
 
     useEditorStore.getState().forward(programChange(2, 9));
 
     expect(useEditorStore.getState()).toMatchObject({ selectedSlot: 2, editor: { sync: 'inSync' }, canUndo: false });
-    expect(useEditorStore.getState().editor.working.sensitivity).toBe(90);
-    expect(virtualPedal.getSnapshot().state.sensitivity).toBe(90);
+    expect(useEditorStore.getState().editor.working.vol2).toBe(90);
+    expect(virtualPedal.getSnapshot().state.vol2).toBe(90);
   });
 
   it('PC 0 goes Live: the undo history clears and the Sync Status is Possibly Stale', () => {
@@ -657,7 +638,7 @@ describe('MIDI input and Pass-through', () => {
 
     fake.play([0xb1, 15, 3]);
 
-    expect(useEditorStore.getState().editor.working.sensitivity).not.toBe(3);
+    expect(useEditorStore.getState().editor.working.vol2).not.toBe(3);
     expect(virtualPedal.getSnapshot().log).toEqual([]);
   });
 
@@ -668,9 +649,9 @@ describe('MIDI input and Pass-through', () => {
 
     fake.play([0xb1, 17, 90]);
 
-    expect(useEditorStore.getState().editor.working.attack).toBe(90);
+    expect(useEditorStore.getState().editor.working.tone2).toBe(90);
     expect(useEditorStore.getState().sent[0]?.bytes).toEqual([0xb1, 17, 90]);
-    expect(virtualPedal.getSnapshot().log.slice(from).map((e) => e.text)).toEqual(['CC 17 = 90 → Attack']);
+    expect(virtualPedal.getSnapshot().log.slice(from).map((e) => e.text)).toEqual(['CC 17 = 90 → Tone 2']);
     expect(useEditorStore.getState().canUndo).toBe(false);
   });
 

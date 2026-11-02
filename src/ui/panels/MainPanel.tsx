@@ -12,35 +12,16 @@ import { PEDAL_GRID } from './pedalGrid';
 type Props = { state: WorkingState; setParam(id: PresetParamId, value: number): void };
 
 /** As they sit on the pedal: two rows of knobs, then the toggles. */
-const [KNOB_TOP, KNOB_MIDDLE, TOGGLES] = PEDAL_GRID;
-const KNOB_ROWS = [KNOB_TOP, KNOB_MIDDLE];
+const [KNOB_TOP, KNOB_BOTTOM, TOGGLES] = PEDAL_GRID;
+const KNOB_ROWS = [KNOB_TOP, KNOB_BOTTOM];
 
 /** The physical preset toggle, left to right: Slot 2, Live, Slot 1 (SPEC.md §3.7). */
 const PRESET_TOGGLE = [2, 'live', 1] as const;
-
-/** Counter-clockwise cuts highs, clockwise cuts lows; noon is flat. */
-const EQ_SIDES = ['− Highs', '− Lows'] as const;
 
 /** The pedal's own controls, laid out as on the pedal (SPEC.md §5.4). */
 export function MainPanel({ state, setParam }: Props) {
   const name = useLibraryStore((s) => s.source.name);
   const modified = useWorkingStateModified();
-
-  const knob = (id: (typeof KNOB_ROWS)[number][number]) => {
-    const param = PARAMS[id];
-    const eq = id === 'eq';
-    return (
-      <Knob
-        key={id}
-        param={param}
-        value={state[id]}
-        accent={eq ? 'accent' : 'ink'}
-        bipolar={eq ? EQ_SIDES : undefined}
-        readout={eq && state.eq === PARAMS.eq.detent ? 'flat' : undefined}
-        onChange={(v) => setParam(id, v)}
-      />
-    );
-  };
 
   return (
     <section className="card main-panel" aria-label="Pedal">
@@ -56,7 +37,9 @@ export function MainPanel({ state, setParam }: Props) {
       <div className="main-knobs">
         {KNOB_ROWS.map((row, i) => (
           <div key={i} className="main-knob-row">
-            {row.map(knob)}
+            {row.map((id) => (
+              <Knob key={id} param={PARAMS[id]} value={state[id]} onChange={(v) => setParam(id, v)} />
+            ))}
           </div>
         ))}
       </div>
@@ -69,19 +52,18 @@ export function MainPanel({ state, setParam }: Props) {
 
       <div className="main-footswitches">
         <Footswitch
-          param={PARAMS.swell}
-          value={state.swell}
+          param={PARAMS.channel2Bypass}
+          value={state.channel2Bypass}
           caption="Left footswitch"
-          shortcut={FOOTSWITCH_KEYS.swell}
-          onChange={(v) => setParam('swell', v)}
+          shortcut={FOOTSWITCH_KEYS.channel2Bypass}
+          onChange={(v) => setParam('channel2Bypass', v)}
         />
         <Footswitch
-          param={PARAMS.bypass}
-          value={state.bypass}
+          param={PARAMS.channel1Bypass}
+          value={state.channel1Bypass}
           caption="Right footswitch"
-          states={['Engaged', 'Bypassed']}
-          shortcut={FOOTSWITCH_KEYS.bypass}
-          onChange={(v) => setParam('bypass', v)}
+          shortcut={FOOTSWITCH_KEYS.channel1Bypass}
+          onChange={(v) => setParam('channel1Bypass', v)}
         />
       </div>
     </section>

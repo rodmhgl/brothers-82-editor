@@ -28,10 +28,6 @@ describe('Sync Status', () => {
     expect(nextSyncStatus(status, 'loaded')).toBe('possiblyStale');
   });
 
-  it.each(ALL)('becomes Possibly Stale after a Factory Reset from %s', (status) => {
-    expect(nextSyncStatus(status, 'factoryReset')).toBe('possiblyStale');
-  });
-
   it.each(ALL)('stays %s after a single edit', (status) => {
     expect(nextSyncStatus(status, 'edit')).toBe(status);
   });

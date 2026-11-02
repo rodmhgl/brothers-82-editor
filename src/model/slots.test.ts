@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SLOTS, isSlot, isToggleSlot, slotNumber, slotReach } from './slots';
 
 describe('Slots', () => {
-  it('has 122 Slots, of which 1–2 are Toggle Slots: Clean has no Bank dip', () => {
+  it('has 122 Slots, of which 1–2 are Toggle Slots', () => {
     expect(SLOTS).toHaveLength(122);
     expect(SLOTS.filter(isToggleSlot)).toEqual([1, 2]);
   });

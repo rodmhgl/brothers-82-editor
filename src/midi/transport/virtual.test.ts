@@ -11,22 +11,22 @@ describe('Virtual Pedal transport', () => {
     expect(pedal.listInputs()).toEqual([]);
   });
 
-  it('decodes a Sensitivity CC into its simulated state and message log', () => {
+  it('decodes a Vol 2 CC into its simulated state and message log', () => {
     const pedal = createVirtualPedal();
 
     pedal.send([0xb1, 0x0f, 0x64]);
 
-    expect(pedal.getSnapshot().state.sensitivity).toBe(100);
-    expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual(['CC 15 = 100 → Sensitivity']);
+    expect(pedal.getSnapshot().state.vol2).toBe(100);
+    expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual(['CC 15 = 100 → Vol 2']);
   });
 
   it('follows the domain core end to end', () => {
     const pedal = createVirtualPedal();
-    const { messages } = dispatch(initialEditorState(), { type: 'setParam', id: 'sensitivity', value: 12 });
+    const { messages } = dispatch(initialEditorState(), { type: 'setParam', id: 'vol2', value: 12 });
 
     messages.forEach((m) => pedal.send(m));
 
-    expect(pedal.getSnapshot().state.sensitivity).toBe(12);
+    expect(pedal.getSnapshot().state.vol2).toBe(12);
   });
 
   it('logs MIDI clock as unknown: the pedal doesn’t follow it', () => {
@@ -53,67 +53,47 @@ describe('Virtual Pedal transport', () => {
 
     pedal.send([0xb0, 0x0f, 0x01]);
 
-    expect(pedal.getSnapshot().state.sensitivity).toBe(77);
+    expect(pedal.getSnapshot().state.vol2).toBe(64);
     expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual([
       'CC 15 = 1 on MIDI channel 1 → ignored (pedal listens on MIDI channel 2)',
     ]);
   });
 });
 
-describe('Virtual Pedal: Factory Reset', () => {
-  it('puts the Hidden Options back to their defaults, leaving Ramp Speed, the rest and stored Slots', () => {
-    const pedal = createVirtualPedal();
-    pedal.send([0xb1, 25, 90]);
-    pedal.send([0xb1, 20, 10]);
-    pedal.send([0xb1, 15, 100]);
-    pedal.send([0xb1, 111, 9]);
-
-    pedal.send([0xb1, 56, 0]);
-
-    expect(pedal.getSnapshot().state).toMatchObject({ gateThreshold: 26, rampSpeed: 10, sensitivity: 100 });
-    expect(pedal.getSnapshot().log.at(-1)?.text).toBe('CC 56 = 0 → Factory Reset → Hidden Options back to defaults');
-
-    pedal.send([0xc1, 9]);
-    expect(pedal.getSnapshot().state.gateThreshold).toBe(90);
-  });
-});
-
-describe('Virtual Pedal: Clean controls', () => {
+describe('Virtual Pedal: Brothers 82 controls', () => {
   it('names the position a toggle is now in', () => {
     const pedal = createVirtualPedal();
 
+    pedal.send([0xb1, 21, 2]);
     pedal.send([0xb1, 22, 1]);
-    pedal.send([0xb1, 21, 127]);
-    pedal.send([0xb1, 31, 2]);
-    pedal.send([0xb1, 33, 0]);
+    pedal.send([0xb1, 23, 127]);
 
-    expect(pedal.getSnapshot().state).toMatchObject({ mode: 1, release: 3, envelopeType: 2, spreadRouting: 1 });
+    expect(pedal.getSnapshot().state).toMatchObject({ ampType: 2, effectOrder: 1, odType: 3 });
     expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual([
-      'CC 22 = 1 → Mode → Shifty',
-      'CC 21 = 127 → Release → Slow',
-      'CC 31 = 2 → Envelope Type → Combo',
-      'CC 33 = 0 → Spread Routing → EQ',
+      'CC 21 = 2 → Amp Type → Plexi',
+      'CC 22 = 1 → Effect Order → 2>1',
+      'CC 23 = 127 → OD Type → RJM',
     ]);
   });
 
-  it('decodes the footswitches, dips and Shifty Response as off (0) or on (≥1)', () => {
+  it('starts with Channel 2 engaged and Channel 1 bypassed', () => {
+    expect(createVirtualPedal().getSnapshot().state).toMatchObject({ channel1Bypass: 0, channel2Bypass: 127 });
+  });
+
+  it('decodes the footswitches and dips as off (0) or on (≥1)', () => {
     const pedal = createVirtualPedal();
 
-    pedal.send([0xb1, 102, 0]);
-    pedal.send([0xb1, 103, 1]);
-    pedal.send([0xb1, 78, 64]);
+    pedal.send([0xb1, 103, 0]);
+    pedal.send([0xb1, 102, 1]);
+    pedal.send([0xb1, 72, 64]);
     pedal.send([0xb1, 67, 1]);
-    pedal.send([0xb1, 32, 2]);
-    pedal.send([0xb1, 106, 127]);
 
-    expect(pedal.getSnapshot().state).toMatchObject({ bypass: 0, swell: 127, dusty: 127, sweep: 127, shiftyResponse: 3, dynamicsMax: 127 });
+    expect(pedal.getSnapshot().state).toMatchObject({ channel2Bypass: 0, channel1Bypass: 127, clean1: 127, sweep: 127 });
     expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual([
-      'CC 102 = 0 → Bypass → Off',
-      'CC 103 = 1 → Swell → On',
-      'CC 78 = 64 → Dusty → On · Dusty: limiter is now an overdrive',
+      'CC 103 = 0 → Channel 2 Bypass → Bypassed',
+      'CC 102 = 1 → Channel 1 Bypass → Engaged',
+      'CC 72 = 64 → Clean 1 → On',
       'CC 67 = 1 → Sweep → T',
-      'CC 32 = 2 → Shifty Response → Envelope',
-      'CC 106 = 127 → Dynamics Max → On',
     ]);
   });
 
@@ -129,25 +109,20 @@ describe('Virtual Pedal: Clean controls', () => {
     }
   });
 
-  it('logs the Alt Menu as not in the MIDI map', () => {
-    const pedal = createVirtualPedal();
-
-    pedal.send([0xb1, 104, 127]);
-
-    expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual(['CC 104 = 127 → (not in MIDI map)']);
-  });
-
-  it('logs the alternate Swell CC as AUX hold, changing no state', () => {
+  it.each([
+    [104, 'CC 104 = 127 → (not in MIDI map)'],
+    [105, 'CC 105 = 127 → (not in MIDI map)'],
+    [106, 'CC 106 = 127 → (not in MIDI map)'],
+    [52, 'CC 52 = 127 → (not in MIDI map)'],
+    [56, 'CC 56 = 127 → (not in MIDI map)'],
+    [20, 'CC 20 = 127 → (not in MIDI map)'],
+  ])('leaves CC %i out of the MIDI map, changing nothing', (cc, text) => {
     const pedal = createVirtualPedal();
     const before = pedal.getSnapshot().state;
 
-    pedal.send([0xb1, 105, 127]);
-    pedal.send([0xb1, 105, 0]);
+    pedal.send([0xb1, cc, 127]);
 
-    expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual([
-      'CC 105 = 127 → AUX hold → On',
-      'CC 105 = 0 → AUX hold → Off',
-    ]);
+    expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual([text]);
     expect(pedal.getSnapshot().state).toEqual(before);
   });
 
@@ -162,7 +137,7 @@ describe('Virtual Pedal: Clean controls', () => {
     expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual([
       'PC 0 → Live',
       'PC 5 → recall Slot 5 → empty, nothing changes',
-      'PC 1 → recall Slot 1 → factory preset (not simulated), nothing changes',
+      'PC 1 → recall Slot 1 → empty, nothing changes',
       'PC 5 on MIDI channel 5 → ignored (pedal listens on MIDI channel 2)',
     ]);
   });
@@ -180,7 +155,7 @@ describe('Virtual Pedal: Slots', () => {
     pedal.send([0xc1, 9]);
 
     // Expression is a Performance Control, so a Slot neither saves nor restores it.
-    expect(pedal.getSnapshot().state).toMatchObject({ sensitivity: 100, expression: 0 });
+    expect(pedal.getSnapshot().state).toMatchObject({ vol2: 100, expression: 0 });
     const log = pedal.getSnapshot().log.map((e) => e.text);
     expect(log[2]).toBe('CC 111 = 9 → stored in Slot 9');
     expect(log.at(-1)).toBe('PC 9 → recall Slot 9');
@@ -212,61 +187,13 @@ describe('Virtual Pedal: MIDI channel', () => {
     pedal.send([0xc1, 0]);
 
     expect(pedal.getSnapshot().midiChannel).toBe(5);
-    expect(pedal.getSnapshot().state.sensitivity).toBe(16);
+    expect(pedal.getSnapshot().state.vol2).toBe(16);
     expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual([
       'Powered up holding both footswitches → waiting for a Program Change to set the MIDI channel',
       'CC 15 = 1 on MIDI channel 5 → ignored (pedal listens on MIDI channel 2)',
       'PC 0 on MIDI channel 5 → MIDI channel set to 5',
-      'CC 15 = 16 → Sensitivity',
+      'CC 15 = 16 → Vol 2',
       'PC 0 on MIDI channel 2 → ignored (pedal listens on MIDI channel 5)',
     ]);
-  });
-});
-
-describe('Virtual Pedal: log notes (SPEC.md §5.3)', () => {
-  const textsAfter = (...messages: number[][]) => {
-    const pedal = createVirtualPedal();
-    messages.forEach((m) => pedal.send(m));
-    return pedal.getSnapshot().log.map((e) => e.text);
-  };
-
-  it('notes ramping is engaged when the first target dip turns on, and only then', () => {
-    expect(textsAfter([0xb1, 66, 127], [0xb1, 63, 127], [0xb1, 61, 127], [0xb1, 63, 127])).toEqual([
-      'CC 66 = 127 → Bounce → On',
-      'CC 63 = 127 → EQ target → On · Ramping engaged: SENSITIVITY knob now sets ramp speed',
-      'CC 61 = 127 → Dynamics target → On',
-      'CC 63 = 127 → EQ target → On',
-    ]);
-  });
-
-  it('notes ramping again once every target dip has been off', () => {
-    expect(textsAfter([0xb1, 65, 127], [0xb1, 65, 0], [0xb1, 65, 1]).at(-1)).toBe(
-      'CC 65 = 1 → Wet target → On · Ramping engaged: SENSITIVITY knob now sets ramp speed',
-    );
-  });
-
-  it('notes what Dusty, Sidechain and Swell Aux do when they turn on', () => {
-    expect(textsAfter([0xb1, 78, 127], [0xb1, 74, 127], [0xb1, 77, 127], [0xb1, 77, 127], [0xb1, 78, 0])).toEqual([
-      'CC 78 = 127 → Dusty → On · Dusty: limiter is now an overdrive',
-      'CC 74 = 127 → Sidechain → On · Sidechain: following the external input',
-      'CC 77 = 127 → Swell Aux → On · Swell Aux: AUX now triggers manual swells',
-      'CC 77 = 127 → Swell Aux → On',
-      'CC 78 = 0 → Dusty → Off',
-    ]);
-  });
-
-  it('notes Shifty Response has no effect when it changes outside the Shifty EQ mode', () => {
-    expect(textsAfter([0xb1, 32, 0], [0xb1, 32, 0], [0xb1, 22, 1], [0xb1, 32, 3])).toEqual([
-      'CC 32 = 0 → Shifty Response → ASR · Shifty Response has no effect outside the Shifty EQ mode',
-      'CC 32 = 0 → Shifty Response → ASR',
-      'CC 22 = 1 → Mode → Shifty',
-      'CC 32 = 3 → Shifty Response → Envelope',
-    ]);
-  });
-
-  it('adds no note to a recalled Slot', () => {
-    const texts = textsAfter([0xb1, 78, 127], [0xb1, 111, 9], [0xb1, 78, 0], [0xc1, 9]);
-
-    expect(texts.at(-1)).toBe('PC 9 → recall Slot 9');
   });
 });

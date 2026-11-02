@@ -1,6 +1,6 @@
 import { decode } from '../midi/decode';
 import type { MidiMessage } from '../midi/encode';
-import { FACTORY_RESET_CC, LIVE_PROGRAM, SAVE_TO_SLOT_CC, SWELL_ALTERNATE_CC, paramByCc, settingLabel } from '../midi/map';
+import { LIVE_PROGRAM, SAVE_TO_SLOT_CC, paramByCc, settingLabel } from '../midi/map';
 
 /** The MIDI Monitor shows about this many of the newest outgoing messages. */
 export const MONITOR_ROWS = 15;
@@ -34,11 +34,9 @@ export function describeSent(bytes: MidiMessage): MonitorRow {
   return { type: '—', number: '', value: '', label: msg.bytes.map((b) => b.toString(16).toUpperCase().padStart(2, '0')).join(' ') };
 }
 
-/** What a CC means: its param and named setting, a Store, AUX hold (SPEC.md §4.4), or '—' outside the MIDI map. */
+/** What a CC means: its param and named setting, a Store, or '—' outside the MIDI map. */
 function ccLabel(cc: number, value: number): string {
   if (cc === SAVE_TO_SLOT_CC) return `Store to Slot ${value}`;
-  if (cc === SWELL_ALTERNATE_CC) return 'AUX hold';
-  if (cc === FACTORY_RESET_CC) return 'Factory Reset';
   const param = paramByCc(cc);
   if (!param) return '—';
   const named = settingLabel(param, value);

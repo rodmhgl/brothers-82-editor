@@ -28,7 +28,7 @@ describe('the initial Editor State', () => {
     const state = fresh();
 
     expect(state.working).toEqual(defaultWorkingState());
-    expect(state.performance).toEqual({ dynamicsMax: 0, ramping: 0, expression: 0 });
+    expect(state.performance).toEqual({ expression: 0 });
     expect(state.global).toEqual({ midiChannel: 2 });
     expect(state.sync).toBe('possiblyStale');
     expect(state.slotMap).toEqual({});
@@ -37,7 +37,7 @@ describe('the initial Editor State', () => {
 });
 
 describe('restore', () => {
-  const working = { ...defaultWorkingState(), sensitivity: 100 };
+  const working = { ...defaultWorkingState(), vol2: 100 };
   const slotMap = { 5: { slot: 5, snapshot: working, name: 'Untitled', writtenAt: '2026-10-05T12:00:00.000Z' } };
 
   it('takes up the last session’s Working State, Slot Map and MIDI channel, sending nothing', () => {
@@ -50,7 +50,7 @@ describe('restore', () => {
   });
 
   it('is Possibly Stale, with no undo history: the pedal may have been changed since', () => {
-    const edited = run(fresh(), { type: 'sendAllFinished' }, set('sensitivity', 10)).state;
+    const edited = run(fresh(), { type: 'sendAllFinished' }, set('vol2', 10)).state;
     const { state } = dispatch(edited, { type: 'restore', working, slotMap, midiChannel: 2 });
 
     expect(state.sync).toBe('possiblyStale');
@@ -59,48 +59,40 @@ describe('restore', () => {
 });
 
 describe('setParam', () => {
-  it('setting Mix to 100 on MIDI channel 2 sends B1 0F 64', () => {
-    const result = dispatch(fresh(), set('sensitivity', 100));
+  it('setting Vol 2 to 100 on MIDI channel 2 sends B1 0F 64', () => {
+    const result = dispatch(fresh(), set('vol2', 100));
 
-    expect(result.state.working.sensitivity).toBe(100);
+    expect(result.state.working.vol2).toBe(100);
     expect(result.messages).toEqual([[0xb1, 0x0f, 0x64]]);
   });
 
   it('sends on the Editor State’s MIDI channel', () => {
-    const { messages } = run(fresh(), { type: 'setMidiChannel', midiChannel: 5 }, set('sensitivity', 1));
+    const { messages } = run(fresh(), { type: 'setMidiChannel', midiChannel: 5 }, set('vol2', 1));
 
     expect(messages).toEqual([[0xb4, 0x0f, 1]]);
   });
 
   it('clamps and rounds values into the range the MIDI map allows', () => {
-    expect(dispatch(fresh(), set('sensitivity', 200)).messages).toEqual([[0xb1, 0x0f, 0x7f]]);
-    expect(dispatch(fresh(), set('sensitivity', -5)).messages).toEqual([[0xb1, 0x0f, 0x00]]);
-    expect(dispatch(fresh(), set('sensitivity', 63.6)).state.working.sensitivity).toBe(64);
+    expect(dispatch(fresh(), set('vol2', 200)).messages).toEqual([[0xb1, 0x0f, 0x7f]]);
+    expect(dispatch(fresh(), set('vol2', -5)).messages).toEqual([[0xb1, 0x0f, 0x00]]);
+    expect(dispatch(fresh(), set('vol2', 63.6)).state.working.vol2).toBe(64);
   });
 
   it.each([
-    ['dynamics', 14, 10],
-    ['wet', 16, 20],
-    ['attack', 17, 90],
-    ['dry', 19, 30],
-    ['release', 21, 3],
-    ['physics', 23, 2],
-    ['sidechain', 74, 127],
-    ['noiseGate', 75, 0],
-    ['mode', 22, 2],
-    ['eq', 18, 100],
-    ['swell', 103, 127],
-    ['bypass', 102, 0],
-    ['gateRelease', 24, 10],
-    ['gateThreshold', 25, 127],
-    ['swellIn', 26, 99],
-    ['userRelease', 27, 0],
-    ['envelopeBalance', 28, 64],
-    ['swellOut', 29, 127],
-    ['rampSpeed', 20, 5],
-    ['shiftyResponse', 32, 0],
-    ['envelopeType', 31, 1],
-    ['spreadRouting', 33, 3],
+    ['gain2', 14, 10],
+    ['gain1', 16, 20],
+    ['tone2', 17, 90],
+    ['vol1', 18, 100],
+    ['tone1', 19, 30],
+    ['ampType', 21, 3],
+    ['effectOrder', 22, 1],
+    ['odType', 23, 2],
+    ['gateRelease', 27, 10],
+    ['gateThreshold', 29, 127],
+    ['clean1', 72, 127],
+    ['noiseGate', 71, 127],
+    ['channel1Bypass', 102, 127],
+    ['channel2Bypass', 103, 0],
   ] as const)('%s sends CC %i = %i and lands in the Working State', (id, cc, value) => {
     const result = dispatch(fresh(), set(id, value));
 
@@ -109,39 +101,33 @@ describe('setParam', () => {
   });
 
   it('sends 3-position toggles only as positions 1/2/3', () => {
-    expect(dispatch(fresh(), set('release', 0)).messages).toEqual([[0xb1, 21, 1]]);
-    expect(dispatch(fresh(), set('physics', 9)).messages).toEqual([[0xb1, 23, 3]]);
-    expect(dispatch(fresh(), set('envelopeType', 9)).messages).toEqual([[0xb1, 31, 3]]);
-    expect(dispatch(fresh(), set('spreadRouting', 0)).messages).toEqual([[0xb1, 33, 1]]);
+    expect(dispatch(fresh(), set('ampType', 0)).messages).toEqual([[0xb1, 21, 1]]);
+    expect(dispatch(fresh(), set('odType', 9)).messages).toEqual([[0xb1, 23, 3]]);
+    expect(dispatch(fresh(), set('effectOrder', 2)).messages).toEqual([[0xb1, 22, 2]]);
   });
 
-  it('sends switches only as 0 or 127', () => {
-    expect(dispatch(fresh(), set('sidechain', 1)).messages).toEqual([[0xb1, 74, 127]]);
-    expect(dispatch(fresh(), set('swell', 1)).messages).toEqual([[0xb1, 103, 127]]);
-  });
-
-  it('sends Shifty Response only as ASR (0) or Envelope (3)', () => {
-    expect(dispatch(fresh(), set('shiftyResponse', 7)).messages).toEqual([[0xb1, 32, 3]]);
-    expect(dispatch(fresh(), set('shiftyResponse', 0)).messages).toEqual([[0xb1, 32, 0]]);
+  it('sends on/off params only as 0 or 127', () => {
+    expect(dispatch(fresh(), set('motoByp2', 1)).messages).toEqual([[0xb1, 74, 127]]);
+    expect(dispatch(fresh(), set('channel1Bypass', 1)).messages).toEqual([[0xb1, 102, 127]]);
+    expect(dispatch(fresh(), set('channel2Bypass', 0)).messages).toEqual([[0xb1, 103, 0]]);
   });
 
   it.each([
-    ['dynamicsTarget', 61],
-    ['attackTarget', 62],
-    ['eqTarget', 63],
-    ['dryTarget', 64],
-    ['wetTarget', 65],
-    ['bounce', 66],
+    ['volume1Target', 61],
+    ['volume2Target', 62],
+    ['gain1Target', 63],
+    ['gain2Target', 64],
+    ['tone1Target', 65],
+    ['tone2Target', 66],
     ['sweep', 67],
     ['polarity', 68],
-    ['miso', 71],
-    ['spread', 72],
-    ['latch', 73],
-    ['sidechain', 74],
-    ['noiseGate', 75],
-    ['motion', 76],
-    ['swellAux', 77],
-    ['dusty', 78],
+    ['noiseGate', 71],
+    ['clean1', 72],
+    ['motoByp1', 73],
+    ['motoByp2', 74],
+    ['contour2', 75],
+    ['presence2', 76],
+    ['master', 77],
   ] as const)('dip %s sends CC %i = 127 on, 0 off', (id, cc) => {
     const { messages, state } = run(fresh(), set(id, 1), set(id, 0));
 
@@ -150,26 +136,6 @@ describe('setParam', () => {
       [0xb1, cc, 0],
     ]);
     expect(state.working[id]).toBe(0);
-  });
-
-  it.each([
-    ['dynamicsMax', 106, 127],
-    ['dynamicsMax', 106, 0],
-    ['ramping', 52, 127],
-    ['ramping', 52, 0],
-  ] as const)('Performance Control %s sends CC %i = %i and lands in the Performance Controls', (id, cc, value) => {
-    const result = dispatch(fresh(), set(id, value));
-
-    expect(result.messages).toEqual([[0xb1, cc, value]]);
-    expect(result.state.performance[id]).toBe(value);
-    expect(result.state.working).toEqual(defaultWorkingState());
-  });
-
-  it('Dynamics Max is a level: any non-zero value engages it (127)', () => {
-    const { state, messages } = run(fresh(), set('dynamicsMax', 1));
-
-    expect(messages).toEqual([[0xb1, 106, 127]]);
-    expect(state.performance.dynamicsMax).toBe(127);
   });
 
   it('Expression sends CC 100, clamped and rounded', () => {
@@ -185,32 +151,31 @@ describe('setParam', () => {
     for (const status of ['inSync', 'possiblyStale', 'unknown'] as const) {
       const start = { ...fresh(), sync: status };
 
-      expect(dispatch(start, set('sensitivity', 3)).state.sync).toBe(status);
+      expect(dispatch(start, set('vol2', 3)).state.sync).toBe(status);
     }
   });
 });
 
 describe('undo/redo', () => {
   it('undoes and redoes Working State edits, sending each result', () => {
-    const edited = run(fresh(), set('sensitivity', 10), set('envelopeBalance', 90)).state;
+    const edited = run(fresh(), set('vol2', 10), set('gateRelease', 90)).state;
 
     const undone = run(edited, { type: 'undo' }, { type: 'undo' });
-    expect(undone.state.working).toMatchObject({ sensitivity: 77, envelopeBalance: 0 });
+    expect(undone.state.working).toMatchObject({ vol2: 64, gateRelease: 64 });
     expect(undone.messages).toEqual([
-      [0xb1, 28, 0],
-      [0xb1, 15, 77],
+      [0xb1, 27, 64],
+      [0xb1, 15, 64],
     ]);
 
     const redone = dispatch(undone.state, { type: 'redo' });
-    expect(redone.state.working.sensitivity).toBe(10);
+    expect(redone.state.working.vol2).toBe(10);
     expect(redone.messages).toEqual([[0xb1, 15, 10]]);
   });
 
   it('records nothing for edits made with undoable: false, or for Performance Controls', () => {
     const { state } = run(
       fresh(),
-      { type: 'setParam', id: 'bypass', value: 127, undoable: false },
-      set('dynamicsMax', 127),
+      { type: 'setParam', id: 'channel2Bypass', value: 127, undoable: false },
       set('expression', 9),
     );
 
@@ -218,9 +183,9 @@ describe('undo/redo', () => {
   });
 
   it('records a gesture as one step', () => {
-    const { state } = run(fresh(), { type: 'beginGesture' }, set('sensitivity', 10), set('sensitivity', 20), { type: 'endGesture' });
+    const { state } = run(fresh(), { type: 'beginGesture' }, set('vol2', 10), set('vol2', 20), { type: 'endGesture' });
 
-    expect(dispatch(state, { type: 'undo' }).messages).toEqual([[0xb1, 15, 77]]);
+    expect(dispatch(state, { type: 'undo' }).messages).toEqual([[0xb1, 15, 64]]);
   });
 
   it('does nothing with nothing to undo or redo', () => {
@@ -231,8 +196,8 @@ describe('undo/redo', () => {
 
 describe('load', () => {
   it('replaces the Working State and clears the history, Possibly Stale until Send All finishes; sends nothing itself', () => {
-    const working = { ...defaultWorkingState(), sensitivity: 3 };
-    const start = run(fresh(), { type: 'sendAllFinished' }, set('envelopeBalance', 5)).state;
+    const working = { ...defaultWorkingState(), vol2: 3 };
+    const start = run(fresh(), { type: 'sendAllFinished' }, set('gateRelease', 5)).state;
 
     const result = dispatch(start, { type: 'load', working });
 
@@ -242,18 +207,18 @@ describe('load', () => {
 
 describe('Slots', () => {
   const origin = { presetId: 'p1', name: 'Shimmer' };
-  /** Slot 9 stored with Mix at 100, then Mix moved on to 5. */
+  /** Slot 9 stored with Vol 2 at 100, then Vol 2 moved on to 5. */
   const withSlot9 = () =>
     run(
       fresh(),
-      set('sensitivity', 100),
+      set('vol2', 100),
       { type: 'sendAllFinished' },
       { type: 'store', slot: 9, origin, writtenAt: '2026-10-07T00:00:00.000Z' },
-      set('sensitivity', 5),
+      set('vol2', 5),
     ).state;
 
   it('storing sends CC 111 = n and records the Working State in the Slot Map', () => {
-    const start = run(fresh(), set('sensitivity', 100)).state;
+    const start = run(fresh(), set('vol2', 100)).state;
     const result = dispatch(start, { type: 'store', slot: 9, origin, writtenAt: 'when' });
 
     expect(result.messages).toEqual([[0xb1, 111, 9]]);
@@ -270,7 +235,7 @@ describe('Slots', () => {
     const result = dispatch({ ...withSlot9(), sync: 'unknown' }, { type: 'recall', slot: 9 });
 
     expect(result.messages).toEqual([[0xc1, 9]]);
-    expect(result.state.working.sensitivity).toBe(100);
+    expect(result.state.working.vol2).toBe(100);
     expect(result.state.sync).toBe('inSync');
     expect(result.state.history).toEqual(EMPTY_HISTORY);
   });
@@ -285,7 +250,7 @@ describe('Slots', () => {
     expect(result.state.history).toEqual(EMPTY_HISTORY);
   });
 
-  it('recalling a factory Toggle Slot is Unknown until the editor stores to it', () => {
+  it('recalling a Toggle Slot is Unknown until the editor stores to it', () => {
     const inSync = run(fresh(), { type: 'sendAllFinished' }).state;
     expect(dispatch(inSync, { type: 'recall', slot: 1 }).state.sync).toBe('unknown');
     expect(dispatch(inSync, { type: 'recall', slot: 2 }).state.sync).toBe('unknown');
@@ -303,44 +268,6 @@ describe('Slots', () => {
   });
 });
 
-describe('factoryReset', () => {
-  /** Slot 9 stored, then Hidden Options, Ramp Speed and a knob edited. */
-  const edited = () =>
-    run(
-      fresh(),
-      { type: 'sendAllFinished' },
-      { type: 'store', slot: 9, origin: { presetId: null, name: 'Nine' }, writtenAt: 'when' },
-      set('gateThreshold', 90),
-      set('spreadRouting', 3),
-      set('rampSpeed', 10),
-      set('sensitivity', 100),
-    ).state;
-
-  it('sends CC 56 and puts the Hidden Options back to their defaults, leaving Ramp Speed and the rest', () => {
-    const result = dispatch(edited(), { type: 'factoryReset' });
-
-    expect(result.messages).toEqual([[0xb1, 56, 127]]);
-    expect(result.state.working).toMatchObject({ gateThreshold: 26, spreadRouting: 2, rampSpeed: 10, sensitivity: 100 });
-  });
-
-  it('keeps the Slot Map, clears the history and makes the Sync Status Possibly Stale', () => {
-    const start = edited();
-    const result = dispatch(start, { type: 'factoryReset' });
-
-    expect(result.state.slotMap).toEqual(start.slotMap);
-    expect(result.state.history).toEqual(EMPTY_HISTORY);
-    expect(result.state.sync).toBe('possiblyStale');
-  });
-
-  it('is followed the same way when forwarded, whatever the value', () => {
-    const result = dispatch(edited(), { type: 'forward', bytes: [0xb1, 56, 0] });
-
-    expect(result.messages).toEqual([[0xb1, 56, 0]]);
-    expect(result.state.working).toMatchObject({ gateThreshold: 26, spreadRouting: 2, rampSpeed: 10 });
-    expect(result.state.sync).toBe('possiblyStale');
-  });
-});
-
 describe('forward', () => {
   const forward = (state: EditorState, bytes: number[]) => dispatch(state, { type: 'forward', bytes });
 
@@ -353,7 +280,6 @@ describe('forward', () => {
     ['PC n', [0xc1, 9]],
     ['PC 123', [0xc1, 123]],
     ['Save to Slot', [0xb1, 111, 9]],
-    ['AUX hold (CC 105)', [0xb1, 105, 127]],
     ['MIDI clock', [0xf8]],
   ])('sends %s unchanged', (_, bytes) => {
     expect(forward(fresh(), bytes).messages).toEqual([bytes]);
@@ -362,11 +288,10 @@ describe('forward', () => {
   it('puts a forwarded CC in the slice its scope picks, as the pedal decodes it', () => {
     let state = fresh();
     state = forward(state, [0xb1, 21, 0]).state;
-    state = forward(state, [0xb1, 106, 1]).state;
     state = forward(state, [0xb1, 100, 70]).state;
 
-    expect(state.working.release).toBe(1);
-    expect(state.performance).toMatchObject({ dynamicsMax: 127, expression: 70 });
+    expect(state.working.ampType).toBe(1);
+    expect(state.performance).toMatchObject({ expression: 70 });
   });
 
   it('does not record a forwarded CC for undo', () => {
@@ -374,13 +299,13 @@ describe('forward', () => {
   });
 
   it('changes nothing for messages the pedal ignores or can’t place', () => {
-    for (const bytes of [[0xb4, 15, 3], [0xb1, 1, 3], [0xc1, 123], [0xb1, 111, 0], [0xb1, 105, 127], [0xb1, 105, 0], [0xf8]]) {
+    for (const bytes of [[0xb4, 15, 3], [0xb1, 1, 3], [0xc1, 123], [0xb1, 111, 0], [0xb1, 105, 127], [0xb1, 56, 0], [0xf8]]) {
       expect(forward(fresh(), bytes).state, String(bytes)).toEqual(fresh());
     }
   });
 
   it('PC 0 goes Live: Possibly Stale, history cleared', () => {
-    const start = run(fresh(), { type: 'sendAllFinished' }, set('sensitivity', 1)).state;
+    const start = run(fresh(), { type: 'sendAllFinished' }, set('vol2', 1)).state;
     const { state } = forward(start, [0xc1, 0]);
 
     expect(state.sync).toBe('possiblyStale');
@@ -392,12 +317,12 @@ describe('forward', () => {
 
     const stored = run(
       fresh(),
-      set('sensitivity', 100),
+      set('vol2', 100),
       { type: 'store', slot: 9, origin: { presetId: null, name: 'Untitled' }, writtenAt: 'when' },
-      set('sensitivity', 5),
+      set('vol2', 5),
     ).state;
     const { state } = forward(stored, [0xc1, 9]);
-    expect(state.working.sensitivity).toBe(100);
+    expect(state.working.vol2).toBe(100);
     expect(state.sync).toBe('inSync');
   });
 
@@ -410,8 +335,8 @@ describe('forward', () => {
   it('reads on the Editor State’s MIDI channel', () => {
     const start = dispatch(fresh(), { type: 'setMidiChannel', midiChannel: 5 }).state;
 
-    expect(forward(start, [0xb1, 15, 3]).state.working.sensitivity).toBe(77);
-    expect(forward(start, [0xb4, 15, 3]).state.working.sensitivity).toBe(3);
+    expect(forward(start, [0xb1, 15, 3]).state.working.vol2).toBe(64);
+    expect(forward(start, [0xb4, 15, 3]).state.working.vol2).toBe(3);
   });
 });
 
@@ -422,15 +347,7 @@ describe('receive (Pass-through)', () => {
     const result = receive(fresh(), [0xb1, 17, 90]);
 
     expect(result.messages).toEqual([[0xb1, 17, 90]]);
-    expect(result.state.working.attack).toBe(90);
-  });
-
-  it('forwards AUX hold (CC 105) unchanged, leaving the Working State, Swell and Sync Status alone', () => {
-    const start = run(fresh(), { type: 'sendAllFinished' }).state;
-    const result = receive(start, [0xb1, 105, 127]);
-
-    expect(result.messages).toEqual([[0xb1, 105, 127]]);
-    expect(result.state).toEqual(start);
+    expect(result.state.working.tone2).toBe(90);
   });
 
   it('does not record a passed-through CC for undo', () => {
@@ -450,13 +367,13 @@ describe('receive (Pass-through)', () => {
 
     const stored = run(
       fresh(),
-      set('sensitivity', 100),
+      set('vol2', 100),
       { type: 'store', slot: 9, origin: { presetId: null, name: 'Untitled' }, writtenAt: 'when' },
-      set('sensitivity', 5),
+      set('vol2', 5),
     ).state;
     const { state, messages } = receive(stored, [0xc1, 9]);
     expect(messages).toEqual([[0xc1, 9]]);
-    expect(state.working.sensitivity).toBe(100);
+    expect(state.working.vol2).toBe(100);
     expect(state.sync).toBe('inSync');
   });
 
@@ -492,7 +409,7 @@ describe('MIDI channel', () => {
     [5, 0xc4],
     [16, 0xcf],
   ])('the MIDI channel wizard sends PC 0 on MIDI channel %i, goes Live, and sends on it from then on', (midiChannel, status) => {
-    const start = run(fresh(), { type: 'sendAllFinished' }, set('sensitivity', 1)).state;
+    const start = run(fresh(), { type: 'sendAllFinished' }, set('vol2', 1)).state;
     const result = dispatch(start, { type: 'setPedalMidiChannel', midiChannel });
 
     expect(result.messages).toEqual([[status, 0]]);
@@ -520,60 +437,63 @@ describe('connection and Send All', () => {
   });
 
   it('encodes the Working State as CCs on the MIDI channel, in Send All order', () => {
-    const working = { ...defaultWorkingState(), sensitivity: 100, sidechain: 127, mode: 1, swell: 127, envelopeBalance: 90, shiftyResponse: 3 };
+    const working = { ...defaultWorkingState(), vol2: 100, motoByp2: 127, effectOrder: 1, channel1Bypass: 127, gateRelease: 90 };
     const state = { ...fresh(), working, global: { midiChannel: 2 } };
 
     expect(encodeSendAll(state)).toEqual([
-      ...[61, 62, 63, 64, 65, 66, 67, 68].map((cc) => [0xb1, cc, 0]), // Ramp / Expression targets
-      [0xb1, 71, 0], // Miso
-      [0xb1, 72, 0], // Spread
-      [0xb1, 73, 0], // Latch
-      [0xb1, 74, 127], // Sidechain
-      [0xb1, 75, 0], // Noise Gate
-      [0xb1, 76, 0], // Motion
-      [0xb1, 77, 0], // Swell Aux
-      [0xb1, 78, 0], // Dusty
-      [0xb1, 21, 2], // Release: User
-      [0xb1, 22, 1], // Mode: Shifty
-      [0xb1, 23, 2], // Physics: Off
-      [0xb1, 20, 64], // Ramp Speed
-      [0xb1, 24, 64], // Gate Release
-      [0xb1, 25, 26], // Gate Threshold
-      [0xb1, 26, 64], // Swell In
-      [0xb1, 27, 64], // User Release
-      [0xb1, 28, 90], // Envelope Balance
-      [0xb1, 29, 64], // Swell Out
-      [0xb1, 31, 1], // Envelope Type: Analog
-      [0xb1, 32, 3], // Shifty Response: Envelope
-      [0xb1, 33, 2], // Spread Routing: Both
-      [0xb1, 14, 39], // Dynamics
-      [0xb1, 15, 100], // Sensitivity
-      [0xb1, 16, 77], // Wet
-      [0xb1, 17, 39], // Attack
-      [0xb1, 18, 64], // EQ
-      [0xb1, 19, 77], // Dry
-      [0xb1, 102, 127], // Bypass: engaged
-      [0xb1, 103, 127], // Swell
+      ...[61, 62, 63, 64, 65, 66, 67, 68].map((cc) => [0xb1, cc, 0]), // Expression / CV targets
+      [0xb1, 71, 0], // Noise Gate
+      [0xb1, 72, 0], // Clean 1
+      [0xb1, 73, 0], // MotoByp 1
+      [0xb1, 74, 127], // MotoByp 2
+      [0xb1, 75, 0], // Contour 2
+      [0xb1, 76, 0], // Presence 2
+      [0xb1, 77, 0], // Master
+      [0xb1, 21, 2], // Amp Type: Plexi
+      [0xb1, 22, 1], // Effect Order: 2>1
+      [0xb1, 23, 2], // OD Type: Super
+      [0xb1, 27, 90], // Gate Release
+      [0xb1, 29, 64], // Gate Threshold
+      [0xb1, 14, 64], // Gain 2
+      [0xb1, 15, 100], // Vol 2
+      [0xb1, 16, 64], // Gain 1
+      [0xb1, 17, 64], // Tone 2
+      [0xb1, 18, 64], // Vol 1
+      [0xb1, 19, 64], // Tone 1
+      [0xb1, 102, 127], // Channel 1 Bypass
+      [0xb1, 103, 127], // Channel 2 Bypass
     ]);
   });
 
   it('never sends Performance Controls', () => {
-    for (const id of ['dynamicsMax', 'ramping', 'expression']) expect(sendAllOrder()).not.toContain(id);
+    expect(sendAllOrder()).not.toContain('expression');
   });
 });
 
 describe('the MIDI map', () => {
-  it('starts from the pedal defaults: engaged, Swell off, toggles in the middle, EQ flat', () => {
-    expect(defaultWorkingState()).toMatchObject({ bypass: 127, swell: 0, release: 2, mode: 2, physics: 2, eq: 64 });
+  it('New starts with every knob at 64, toggles in the middle, Channel 2 engaged and Channel 1 bypassed', () => {
+    expect(defaultWorkingState()).toMatchObject({
+      gain2: 64,
+      vol2: 64,
+      gain1: 64,
+      tone2: 64,
+      vol1: 64,
+      tone1: 64,
+      ampType: 2,
+      effectOrder: 2,
+      odType: 2,
+      channel2Bypass: 127,
+      channel1Bypass: 0,
+    });
   });
 
-  it('keeps Performance Controls out of Presets', () => {
-    for (const id of ['dynamicsMax', 'expression', 'ramping'] as const) expect(PARAMS[id].scope, id).toBe('performance');
-    for (const id of ['dynamicsMax', 'expression', 'ramping']) expect(Object.keys(defaultWorkingState())).not.toContain(id);
+  it('keeps Expression out of Presets', () => {
+    expect(PARAMS.expression.scope).toBe('performance');
+    expect(Object.keys(defaultWorkingState())).not.toContain('expression');
   });
 
-  it('has none of the Lost+Found-only controls: Clock Listen, subdivisions, Factory Reset, Dry Kill, Tap or Random', () => {
-    for (const cc of [51, 53, 54, 56, 57, 93, 112, 113, 114]) expect(paramByCc(cc), `CC ${cc}`).toBeUndefined();
+  it('has none of the Brothers AM or Clean CCs that SPEC §4 leaves out', () => {
+    for (const cc of [20, 52, 56, 104, 105, 106]) expect(paramByCc(cc), `CC ${cc}`).toBeUndefined();
   });
 
   it('names Sweep B/T and Polarity F/R', () => {

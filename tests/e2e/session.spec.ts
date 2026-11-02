@@ -23,14 +23,14 @@ test('reload restores the Working State, Slot Map, MIDI channel and layout, Poss
   const connection = page.getByRole('banner', { name: 'Connection' });
   const syncStatus = connection.getByLabel('Sync Status');
   const editor = page.getByRole('region', { name: 'Editor' });
-  const eq = editor.getByRole('slider', { name: 'EQ', exact: true });
-  const release = editor.getByRole('group', { name: 'Release' });
+  const vol1 = editor.getByRole('slider', { name: 'Vol 1', exact: true });
+  const ampType = editor.getByRole('group', { name: 'Amp Type' });
   const rail = page.getByRole('navigation', { name: 'Slots' });
   const drawer = page.getByRole('complementary', { name: 'Data' });
 
   // Edit, then store in Slot 7: Send All makes it In Sync.
-  await release.getByRole('radio', { name: 'Fast' }).check();
-  await eq.press('PageUp');
+  await ampType.getByRole('radio', { name: '800' }).check();
+  await vol1.press('PageUp');
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('tab', { name: 'Slots' }).click();
   await drawer.getByRole('button', { name: 'Slot 7 · MIDI only' }).click();
@@ -38,15 +38,15 @@ test('reload restores the Working State, Slot Map, MIDI channel and layout, Poss
   await drawer.getByRole('button', { name: 'Overwrite Slot 07? Click again' }).click();
   await expect(rail.getByRole('button', { name: 'Recall Slot 7 · MIDI only · Untitled' })).toBeVisible();
   await expect(syncStatus).toHaveText('In Sync');
-  await eq.press('PageUp');
+  await vol1.press('PageUp');
   await connection.getByLabel('MIDI channel').selectOption('5');
   await expect.poll(async () => (await savedSession(page))?.midiChannel).toBe(5);
 
   await page.reload();
 
   await expect(syncStatus).toHaveText('Possibly Stale');
-  await expect(eq).toHaveAttribute('aria-valuenow', '84');
-  await expect(release.getByRole('radio', { name: 'Fast' })).toBeChecked();
+  await expect(vol1).toHaveAttribute('aria-valuenow', '84');
+  await expect(ampType.getByRole('radio', { name: '800' })).toBeChecked();
   await expect(connection.getByLabel('MIDI channel')).toHaveValue('5');
   await expect(connection.getByLabel('Working State')).toHaveText('Untitled •');
   await expect(rail.getByRole('button', { name: 'Recall Slot 7 · MIDI only · Untitled' })).toBeVisible();
@@ -57,16 +57,16 @@ test('settings apply at once and are kept between sessions', async ({ page }) =>
   await page.goto('/');
   const connection = page.getByRole('banner', { name: 'Connection' });
   const editor = page.getByRole('region', { name: 'Editor' });
-  const footswitch = editor.getByRole('button', { name: 'Swell', exact: true });
+  const footswitch = editor.getByRole('button', { name: 'Channel 1 Bypass', exact: true });
   const drawer = page.getByRole('complementary', { name: 'Data' });
   const log = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log');
   const layoutScale = () => page.evaluate(() => document.documentElement.style.getPropertyValue('--layout-scale'));
 
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('tab', { name: 'Settings' }).click();
-  await expect(footswitch).toContainText('CC 103');
+  await expect(footswitch).toContainText('CC 102');
   await drawer.getByLabel('Show CC numbers').uncheck();
-  await expect(footswitch).not.toContainText('CC 103');
+  await expect(footswitch).not.toContainText('CC 102');
 
   // Without confirmation, Store overwrites on the first click.
   await drawer.getByLabel('Confirm before overwrite').uncheck();
@@ -82,7 +82,7 @@ test('settings apply at once and are kept between sessions', async ({ page }) =>
 
   await page.reload();
 
-  await expect(footswitch).not.toContainText('CC 103');
+  await expect(footswitch).not.toContainText('CC 102');
   expect(Number(await layoutScale())).toBeCloseTo(before * 1.5);
   await expect(drawer.getByLabel('Show CC numbers')).not.toBeChecked();
   await expect(drawer.getByLabel('Confirm before overwrite')).not.toBeChecked();

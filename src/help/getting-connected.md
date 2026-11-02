@@ -16,7 +16,7 @@ The pedal takes MIDI on its **MIDI/AUX** jack, a 1/4" **TRS** socket, not a 5-pi
 
 ### 3. Pick the output
 
-Choose your interface in the **MIDI output** menu on the top bar. The dot beside it shows whether the output is connected. Press **Test**: the editor flips Bypass and then puts it back, so the pedal's LED should change and then return.
+Choose your interface in the **MIDI output** menu on the top bar. The dot beside it shows whether the output is connected. Press **Test**: the editor flips Channel 2 Bypass and then puts it back, so the pedal's LED should change and then return.
 
 ### 4. Match the MIDI channel
 

@@ -28,15 +28,14 @@ function ValueBar({ id, state, setParam }: Props & { id: PresetParamId }) {
       aria-valuemax={param.max}
       aria-valuenow={value}
       {...helpFor(param)}
-      style={{ '--bar-fill': pct(value), ...(param.detent !== undefined && { '--bar-noon': pct(param.detent) }) } as CSSProperties}
+      style={{ '--bar-fill': pct(value) } as CSSProperties}
     >
       <span className="value-bar-fill" />
-      {param.detent !== undefined && <span className="value-bar-noon" />}
     </div>
   );
 }
 
-/** Every knob and Hidden Option as a row: layer, CC, a draggable value and its ramp target dip. */
+/** Every knob and Hidden Option as a row: layer, CC, a draggable value and its Expression / CV target dip. */
 export function ParamTable({ state, setParam }: Props) {
   return (
     <table className="param-table">

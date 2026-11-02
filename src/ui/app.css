@@ -12,7 +12,7 @@
   --text-2: #4a463f;
   --ink: #1d1b17;
   --accent: oklch(0.6 0.11 195);
-  /* The EQ knob, the dips and the active Toggle Slot. Themes with one accent set it to --accent. */
+  /* The dips and the active Toggle Slot. Themes with one accent set it to --accent. */
   --accent-2: var(--accent);
   --warning: oklch(0.55 0.16 30);
   --empty-slot: #e9e3d6;
@@ -124,7 +124,7 @@
   --shadow-drawer: -14px 0 32px rgba(90, 30, 10, 0.14);
 }
 
-/* Green is on or active, teal is the EQ and the dips, orange is a warning. */
+/* Green is on or active, teal is the dips, orange is a warning. */
 :root[data-theme='three-lights'] {
   --paper: #fffaf1;
   --card: #ffffff;
@@ -633,7 +633,7 @@ button:disabled {
   justify-items: stretch;
 }
 
-/* Swell under the left column, Bypass under the right, as on the pedal. */
+/* Channel 2 Bypass under the left column, Channel 1 Bypass under the right, as on the pedal. */
 .main-footswitches {
   justify-items: stretch;
 }
@@ -644,10 +644,9 @@ button:disabled {
 
 /* ── Hidden Options ─────────────────────────────────────────────────── */
 
-/* The main panel's 3×3 grid, with Ramp Speed in a fourth column beside it. */
 .hidden-options-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   /* A small knob's label sits beside it, so the discs line up only from the left. */
   justify-items: start;
   align-items: start;
@@ -655,22 +654,9 @@ button:disabled {
   margin-top: 12px;
 }
 
-.hidden-options-grid > .toggle3 {
-  justify-self: stretch;
-}
+/* ── Footswitches ───────────────────────────────────────────────────── */
 
-.hidden-options-aside {
-  grid-column: 4;
-  grid-row: 1 / span 3;
-  align-self: stretch;
-  padding-left: 14px;
-  border-left: 1px solid var(--rule-light);
-}
-
-/* ── Footswitches and hold buttons ─────────────────────────────────── */
-
-.footswitch,
-.hold-button {
+.footswitch {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -683,43 +669,21 @@ button:disabled {
   touch-action: none;
 }
 
-.footswitch > span:last-child,
-.hold-button {
+.footswitch > span:last-child {
   display: flex;
   flex-direction: column;
 }
 
-.hold-button {
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0;
-  background: transparent;
-}
-
-.hold-button[aria-pressed='true'] {
-  background: var(--accent);
-}
-
-.footswitch-state,
-.hold-name {
+.footswitch-state {
   font: 700 11px var(--font-sans);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.footswitch-cc,
-.hold-cc {
+.footswitch-cc {
   font: 500 10px var(--font-mono);
   color: var(--muted);
-}
-
-.footswitch-cc {
   text-transform: uppercase;
-}
-
-.hold-cc {
-  color: inherit;
-  opacity: 0.75;
 }
 
 .led {
@@ -758,10 +722,6 @@ button:disabled {
   --knob-ring: 3px;
   flex-direction: row;
   gap: 10px;
-}
-
-.knob-accent-accent {
-  --knob-accent: var(--accent-2);
 }
 
 .knob-dial {
@@ -818,35 +778,6 @@ button:disabled {
   height: 10px;
   margin-left: -1px;
   border-radius: 0;
-}
-
-/* The ends of a bipolar knob's sweep, below the dial. */
-.knob-side {
-  position: absolute;
-  bottom: -2px;
-  font: 600 9px var(--font-mono);
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.knob-side-start {
-  right: 82%;
-}
-
-.knob-side-end {
-  left: 82%;
-}
-
-/* Noon, for bipolar and detented knobs. */
-.knob-noon {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 2px;
-  height: var(--knob-ring);
-  margin-left: -1px;
-  background: var(--ink);
-  z-index: 1;
 }
 
 .knob-text {
@@ -1002,32 +933,6 @@ button:disabled {
   gap: 10px;
 }
 
-.switch-button {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 7px 10px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--inset);
-}
-
-.switch-button[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.switch-label {
-  font: 700 10px var(--font-sans);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.switch-state {
-  font: 600 11px var(--font-mono);
-  text-transform: uppercase;
-}
-
 .expression {
   display: flex;
   align-items: center;
@@ -1159,16 +1064,6 @@ button:disabled {
 
 .global-value {
   font: 600 11px var(--font-mono);
-}
-
-.bar-button.is-danger {
-  border-color: var(--warning);
-  color: var(--warning);
-}
-
-.modal-actions .bar-button.is-danger {
-  background: var(--warning);
-  color: var(--paper);
 }
 
 .modal {
@@ -1423,15 +1318,6 @@ button:disabled {
   background: var(--row-accent);
 }
 
-.value-bar-noon {
-  position: absolute;
-  left: var(--bar-noon);
-  top: -2px;
-  bottom: -2px;
-  width: 1px;
-  background: var(--ink);
-}
-
 .target-box {
   appearance: none;
   width: 14px;
@@ -1540,10 +1426,6 @@ button:disabled {
   border-radius: 4px;
   background: transparent;
   font: 600 11px var(--font-mono);
-}
-
-.raw-midi-danger {
-  color: var(--warning);
 }
 
 .raw-midi-hint {
@@ -1709,15 +1591,6 @@ button:disabled {
 .library-problems ul {
   margin: 6px 0 0;
   padding-left: 16px;
-}
-
-/* Like .settings-heading, closer to its list. */
-.preset-group {
-  margin: 8px 0 0;
-  font: 700 11px var(--font-sans);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 
 .preset-list {

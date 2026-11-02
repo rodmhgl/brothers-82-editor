@@ -8,7 +8,7 @@ const shimmer: Preset = {
   notes: 'Big wash',
   createdAt: '2026-10-01T10:00:00.000Z',
   modifiedAt: '2026-10-02T11:30:00.000Z',
-  params: { ...defaultWorkingState(), attack: 90, mode: 2, sidechain: 127 },
+  params: { ...defaultWorkingState(), tone2: 90, effectOrder: 2, motoByp2: 127 },
 };
 
 describe('serializePreset', () => {
@@ -30,9 +30,9 @@ describe('serializePreset', () => {
     expect(file.format).toBe('clean-preset');
     expect(file.schemaVersion).toBe(1);
     expect(typeof file.appVersion).toBe('string');
-    expect(Object.keys(file.params).slice(0, 6)).toEqual(['dynamics', 'sensitivity', 'wet', 'attack', 'eq', 'dry']);
-    expect(file.params).toMatchObject({ attack: 90, mode: 2, sidechain: 127 });
-    for (const excluded of ['dynamicsMax', 'ramping', 'expression']) {
+    expect(Object.keys(file.params).slice(0, 6)).toEqual(['gain2', 'vol2', 'gain1', 'tone2', 'vol1', 'tone1']);
+    expect(file.params).toMatchObject({ tone2: 90, effectOrder: 2, motoByp2: 127 });
+    for (const excluded of ['expression']) {
       expect(file.params, excluded).not.toHaveProperty(excluded);
     }
   });
@@ -104,13 +104,13 @@ describe('parsePreset normalises params the way the pedal decodes them, and repo
 
   it('gives missing params their map default', () => {
     const file = JSON.parse(serializePreset(shimmer));
-    delete file.params.sensitivity;
-    delete file.params.dusty;
+    delete file.params.vol2;
+    delete file.params.master;
     const result = parsePreset(JSON.stringify(file));
     if (!result.ok) throw new Error(result.error);
-    expect(result.preset.params.sensitivity).toBe(77);
-    expect(result.preset.params.dusty).toBe(0);
-    expect(result.warnings).toEqual(['sensitivity missing: set to 77', 'dusty missing: set to 0']);
+    expect(result.preset.params.vol2).toBe(64);
+    expect(result.preset.params.master).toBe(0);
+    expect(result.warnings).toEqual(['vol2 missing: set to 64', 'master missing: set to 0']);
   });
 
   it('drops unknown params, including Performance Controls', () => {
@@ -121,29 +121,29 @@ describe('parsePreset normalises params the way the pedal decodes them, and repo
   });
 
   it('reads toggles ≤1 as 1 and ≥3 as 3, switches ≥1 as 127, and clamps continuous values to 0–127', () => {
-    const result = parseParams({ release: 0, physics: 9, sidechain: 1, sensitivity: 200, eq: -4, dynamics: 33.6 });
+    const result = parseParams({ ampType: 0, odType: 9, motoByp2: 1, vol2: 200, vol1: -4, gain2: 33.6 });
     expect(result.preset.params).toMatchObject({
-      release: 1,
-      physics: 3,
-      sidechain: 127,
-      sensitivity: 127,
-      eq: 0,
-      dynamics: 34,
+      ampType: 1,
+      odType: 3,
+      motoByp2: 127,
+      vol2: 127,
+      vol1: 0,
+      gain2: 34,
     });
     expect(result.warnings).toEqual([
-      'dynamics 33.6: set to 34',
-      'sensitivity 200: set to 127',
-      'eq -4: set to 0',
-      'release 0: set to 1',
-      'physics 9: set to 3',
-      'sidechain 1: set to 127',
+      'gain2 33.6: set to 34',
+      'vol2 200: set to 127',
+      'vol1 -4: set to 0',
+      'ampType 0: set to 1',
+      'odType 9: set to 3',
+      'motoByp2 1: set to 127',
     ]);
   });
 
   it('replaces non-numbers with the default', () => {
-    const result = parseParams({ dry: '90', mode: null });
-    expect(result.preset.params).toMatchObject({ dry: 77, mode: 2 });
-    expect(result.warnings).toEqual(['dry "90": set to 77', 'mode null: set to 2']);
+    const result = parseParams({ tone1: '90', effectOrder: null });
+    expect(result.preset.params).toMatchObject({ tone1: 64, effectOrder: 2 });
+    expect(result.warnings).toEqual(['tone1 "90": set to 64', 'effectOrder null: set to 2']);
   });
 
   it('shortens a name longer than 64 characters', () => {
@@ -192,14 +192,14 @@ describe('Bundles', () => {
 
   it('skips a broken Preset inside a Bundle and reports it and any warnings by name or position', () => {
     const file = JSON.parse(serializeBundle('My Presets', [shimmer, tape], '2026-10-07T09:00:00.000Z'));
-    delete file.presets[0].params.sensitivity;
+    delete file.presets[0].params.vol2;
     file.presets[1].id = '';
     file.presets.push('nope');
 
     expect(parseLibraryFile(JSON.stringify(file))).toEqual({
       ok: true,
       presets: [shimmer],
-      problems: ['Shimmer Tape: sensitivity missing: set to 77', 'Preset 2: Missing id', 'Preset 3: Not a Preset file'],
+      problems: ['Shimmer Tape: vol2 missing: set to 64', 'Preset 2: Missing id', 'Preset 3: Not a Preset file'],
     });
   });
 

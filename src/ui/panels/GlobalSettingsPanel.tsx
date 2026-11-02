@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { FACTORY_RESET_CC } from '../../midi/map';
 import { useEditorStore } from '../../store/editorStore';
 import { MIDI_CHANNELS, midiChannelLabel } from '../midiChannels';
 
@@ -133,40 +132,10 @@ export function MidiChannelWizard({ onClose }: { onClose(): void }) {
   );
 }
 
-/** Factory Reset changes the pedal outside the Working State's undo history, so it only goes out after a confirmation. */
-function FactoryResetConfirm({ onClose }: { onClose(): void }) {
-  const factoryReset = useEditorStore((s) => s.factoryReset);
-  return (
-    <Modal label="Factory Reset" onClose={onClose}>
-      <h2 className="modal-title">Factory Reset the pedal?</h2>
-      <p>
-        This puts the pedal’s Hidden Options back to their defaults (CC {FACTORY_RESET_CC}). Saved Slots are untouched.
-        The Working State’s Hidden Options are reset too, and it can’t be undone.
-      </p>
-      <div className="modal-actions">
-        <button type="button" className="bar-button" autoFocus onClick={onClose}>
-          Cancel
-        </button>
-        <button
-          type="button"
-          className="bar-button is-danger"
-          onClick={() => {
-            factoryReset();
-            onClose();
-          }}
-        >
-          Reset Hidden Options
-        </button>
-      </div>
-    </Modal>
-  );
-}
-
-/** Settings that no Preset changes: the MIDI channel, and Factory Reset (SPEC.md §5.5). */
+/** Settings that no Preset changes: only the MIDI channel (SPEC.md §5.5). */
 export function GlobalSettingsPanel() {
   const midiChannel = useEditorStore((s) => s.editor.global.midiChannel);
-  const [open, setOpen] = useState<'wizard' | 'reset' | null>(null);
-  const close = () => setOpen(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   return (
     <section className="card global-card" aria-labelledby="global-heading">
@@ -181,15 +150,11 @@ export function GlobalSettingsPanel() {
         <output aria-label="MIDI channel" className="global-value">
           {midiChannelLabel(midiChannel)}
         </output>
-        <button type="button" className="bar-button" onClick={() => setOpen('wizard')}>
+        <button type="button" className="bar-button" onClick={() => setWizardOpen(true)}>
           Set pedal’s MIDI channel…
         </button>
       </div>
-      <button type="button" className="bar-button is-danger" onClick={() => setOpen('reset')}>
-        Factory Reset…
-      </button>
-      {open === 'wizard' && <MidiChannelWizard onClose={close} />}
-      {open === 'reset' && <FactoryResetConfirm onClose={close} />}
+      {wizardOpen && <MidiChannelWizard onClose={() => setWizardOpen(false)} />}
     </section>
   );
 }

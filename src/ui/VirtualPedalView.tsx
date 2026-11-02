@@ -6,8 +6,8 @@ const params = Object.values(PARAMS) as ParamDef[];
 const KNOBS = params.filter((p) => p.group === 'knob');
 const TOGGLES = params.filter((p) => p.group === 'toggle');
 const DIPS = params.filter((p) => p.group === 'dipLeft' || p.group === 'dipRight');
-/** Each footswitch's LED: Swell on the left, Bypass on the right. */
-const LEDS = [PARAMS.swell, PARAMS.bypass];
+/** Each Channel's LED: Channel 2 on the left, Channel 1 on the right. */
+const LEDS = [PARAMS.channel2Bypass, PARAMS.channel1Bypass];
 
 export function VirtualPedalView({ pedal }: { pedal: VirtualPedal }) {
   const { state, log } = useSyncExternalStore(pedal.subscribe, pedal.getSnapshot);

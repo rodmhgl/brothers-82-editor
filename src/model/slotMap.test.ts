@@ -3,7 +3,7 @@ import type { Preset } from './schema';
 import { EMPTY_SLOT_MAP, forgetSlot, isChangedSinceStored, recordStore, slotName, type SlotMapEntry } from './slotMap';
 import { defaultWorkingState } from './state';
 
-const snapshot = { ...defaultWorkingState(), sensitivity: 90 };
+const snapshot = { ...defaultWorkingState(), vol2: 90 };
 
 const entry = (over: Partial<SlotMapEntry> = {}): SlotMapEntry => ({
   slot: 5,
@@ -47,7 +47,7 @@ describe('changed since stored', () => {
   });
 
   it('is true once the linked Preset’s params differ', () => {
-    expect(isChangedSinceStored(entry(), preset({ params: { ...snapshot, sensitivity: 10 } }))).toBe(true);
+    expect(isChangedSinceStored(entry(), preset({ params: { ...snapshot, vol2: 10 } }))).toBe(true);
   });
 
   it('ignores a rename or notes edit', () => {

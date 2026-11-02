@@ -9,7 +9,7 @@ describe('createThrottle', () => {
     const sent: number[][] = [];
     const throttle = createThrottle(5, (m) => sent.push(m));
 
-    throttle.send('sensitivity', [0xb1, 15, 1]);
+    throttle.send('vol2', [0xb1, 15, 1]);
 
     expect(sent).toEqual([[0xb1, 15, 1]]);
   });
@@ -18,9 +18,9 @@ describe('createThrottle', () => {
     const sent: number[][] = [];
     const throttle = createThrottle(5, (m) => sent.push(m));
 
-    throttle.send('sensitivity', [0xb1, 15, 1]);
-    throttle.send('sensitivity', [0xb1, 15, 2]);
-    throttle.send('sensitivity', [0xb1, 15, 3]);
+    throttle.send('vol2', [0xb1, 15, 1]);
+    throttle.send('vol2', [0xb1, 15, 2]);
+    throttle.send('vol2', [0xb1, 15, 3]);
     expect(sent).toEqual([[0xb1, 15, 1]]);
 
     vi.advanceTimersByTime(4);
@@ -39,8 +39,8 @@ describe('createThrottle', () => {
     const sent: number[][] = [];
     const throttle = createThrottle(5, (m) => sent.push(m));
 
-    throttle.send('sensitivity', [0xb1, 15, 1]);
-    throttle.send('eq', [0xb1, 18, 1]);
+    throttle.send('vol2', [0xb1, 15, 1]);
+    throttle.send('vol1', [0xb1, 18, 1]);
 
     expect(sent).toEqual([
       [0xb1, 15, 1],
@@ -52,9 +52,9 @@ describe('createThrottle', () => {
     const sent: number[][] = [];
     const throttle = createThrottle(5, (m) => sent.push(m));
 
-    throttle.send('sensitivity', [0xb1, 15, 1]);
+    throttle.send('vol2', [0xb1, 15, 1]);
     vi.advanceTimersByTime(5);
-    throttle.send('sensitivity', [0xb1, 15, 2]);
+    throttle.send('vol2', [0xb1, 15, 2]);
 
     expect(sent).toEqual([
       [0xb1, 15, 1],
@@ -67,7 +67,7 @@ describe('createThrottle', () => {
     const throttle = createThrottle(5, (m) => sent.push(m));
 
     for (let v = 0; v < 20; v++) {
-      throttle.send('sensitivity', [0xb1, 15, v]);
+      throttle.send('vol2', [0xb1, 15, v]);
       vi.advanceTimersByTime(1);
     }
     vi.advanceTimersByTime(5);

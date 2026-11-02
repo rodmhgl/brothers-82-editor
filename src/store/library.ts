@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { PresetParamId } from '../midi/map';
-import { FACTORY_PRESETS, isFactoryPreset } from '../model/factoryPresets';
 import { parseLibraryFile, parsePreset, presetName, serializeBundle, serializePreset, type Preset } from '../model/schema';
 import { isChangedSinceStored, slotName, type SlotMap, type SlotMapEntry } from '../model/slotMap';
 import { defaultWorkingState, type WorkingState } from '../model/state';
@@ -130,7 +129,7 @@ type LibraryStore = {
   folderName: string | null;
   /** The folder picked at an earlier launch, while it isn't open. */
   remembered: RememberedFolder | null;
-  /** The folder's Presets, by name. The Factory Presets aren't among them: they're built in (`FACTORY_PRESETS`). */
+  /** The folder's Presets, by name. */
   presets: LibraryEntry[];
   /** Files skipped or changed on load, one line each. */
   problems: string[];
@@ -170,8 +169,7 @@ type LibraryStore = {
   /** Starts an Untitled Working State from the defaults and sends it. Nothing is written until it is saved. */
   newWorkingState(): Promise<void>;
   /**
-   * Writes the Working State back to its Preset. Resolves false, writing nothing, if it has no Preset yet or its Preset
-   * is a Factory Preset, which can't be saved over: Save As instead.
+   * Writes the Working State back to its Preset. Resolves false, writing nothing, if it has no Preset yet: Save As instead.
    */
   save(): Promise<boolean>;
   /** Renames a Preset and, where the name slugs differently, its file. Its id is kept. */
@@ -319,14 +317,7 @@ export function createLibraryStore(editor: EditorStoreApi, deps: LibraryDeps) {
     };
     /** A Preset in the Library folder, to change. */
     const entry = (id: string) => {
-      if (isFactoryPreset(id)) throw new Error('Factory Presets can’t be changed. Duplicate one to make your own.');
       const found = get().presets.find((p) => p.preset.id === id);
-      if (!found) throw new Error('That Preset is no longer in the Library');
-      return found;
-    };
-    /** Any Preset the Library offers, Factory Presets included, to read. */
-    const presetById = (id: string) => {
-      const found = FACTORY_PRESETS.find((p) => p.id === id) ?? get().presets.find((p) => p.preset.id === id)?.preset;
       if (!found) throw new Error('That Preset is no longer in the Library');
       return found;
     };
@@ -428,7 +419,7 @@ export function createLibraryStore(editor: EditorStoreApi, deps: LibraryDeps) {
         await open(await deps.openBrowserStorage(), 'browser');
       },
       exportPreset(id) {
-        const preset = presetById(id);
+        const preset = entry(id).preset;
         deps.download(presetFileName(preset.name, []), serializePreset(preset));
       },
       exportBundle() {
@@ -461,16 +452,6 @@ export function createLibraryStore(editor: EditorStoreApi, deps: LibraryDeps) {
               continue;
             }
             seen.set(preset.id, preset);
-            // A Factory Preset can't be replaced, so a changed copy of one comes in as a new Preset.
-            const factory = FACTORY_PRESETS.find((p) => p.id === preset.id);
-            if (factory) {
-              if (sameContents(factory, preset)) updateReport({ skipped: 1 });
-              else {
-                await addFile({ ...preset, id: deps.newId() });
-                updateReport({ keptBoth: 1 });
-              }
-              continue;
-            }
             const existing = get().presets.find((p) => p.preset.id === preset.id)?.preset;
             if (!existing) {
               await addFile(preset);
@@ -500,7 +481,7 @@ export function createLibraryStore(editor: EditorStoreApi, deps: LibraryDeps) {
         set({ source: sourceOf(preset) });
       },
       async recall(id) {
-        const preset = presetById(id);
+        const preset = entry(id).preset;
         set({ source: sourceOf(preset) });
         await editor.getState().loadWorking(preset.params);
       },
@@ -526,7 +507,7 @@ export function createLibraryStore(editor: EditorStoreApi, deps: LibraryDeps) {
         if (get().source.presetId === id) set({ source: { ...get().source, name } });
       },
       async duplicate(id) {
-        const preset = presetById(id);
+        const preset = entry(id).preset;
         const now = deps.now();
         const name = presetName(`${preset.name} copy`) ?? preset.name;
         await addFile({ ...preset, id: deps.newId(), name, createdAt: now, modifiedAt: now });
@@ -552,7 +533,7 @@ export function createLibraryStore(editor: EditorStoreApi, deps: LibraryDeps) {
       async reStoreSlot(slot) {
         const presetId = editor.getState().editor.slotMap[slot]?.presetId;
         if (!presetId) throw new Error('That Slot has no Preset to re-store');
-        const preset = presetById(presetId);
+        const preset = entry(presetId).preset;
         set({ source: sourceOf(preset) });
         return editor.getState().storeSlot(slot, { presetId, name: preset.name }, preset.params);
       },
@@ -770,7 +751,6 @@ export type SlotInfo = {
 export function slotInfo(slotMap: SlotMap, presets: LibraryEntry[], slot: number): SlotInfo | undefined {
   const entry = slotMap[slot];
   if (!entry) return undefined;
-  const preset =
-    FACTORY_PRESETS.find((p) => p.id === entry.presetId) ?? presets.find((p) => p.preset.id === entry.presetId)?.preset;
+  const preset = presets.find((p) => p.preset.id === entry.presetId)?.preset;
   return { entry, name: slotName(entry, preset), preset, changed: isChangedSinceStored(entry, preset) };
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { controlChange, programChange } from '../midi/encode';
-import { FACTORY_RESET_CC } from '../midi/map';
+import { PARAMS } from '../midi/map';
 import { useEditorStore } from '../store/editorStore';
 
 function byteInput(value: string, onChange: (v: string) => void, label: string) {
@@ -16,13 +16,9 @@ function byteInput(value: string, onChange: (v: string) => void, label: string) 
 export function RawMidiPanel() {
   const forward = useEditorStore((s) => s.forward);
   const midiChannel = useEditorStore((s) => s.editor.global.midiChannel);
-  const [cc, setCc] = useState('52');
+  const [cc, setCc] = useState(String(PARAMS.gain2.cc));
   const [value, setValue] = useState('127');
   const [program, setProgram] = useState('0');
-  const [allowReset, setAllowReset] = useState(false);
-
-  // Factory Reset resets the Live Hidden Options: refused unless explicitly allowed.
-  const ccBlocked = Number(cc) === FACTORY_RESET_CC && !allowReset;
 
   return (
     <details className="raw-midi">
@@ -31,20 +27,12 @@ export function RawMidiPanel() {
         aria-label="Send CC"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!ccBlocked) forward(controlChange(midiChannel, Number(cc), Number(value)));
+          forward(controlChange(midiChannel, Number(cc), Number(value)));
         }}
       >
         {byteInput(cc, setCc, 'CC')}
         {byteInput(value, setValue, 'Value')}
-        <button type="submit" disabled={ccBlocked}>
-          Send CC
-        </button>
-        {Number(cc) === FACTORY_RESET_CC && (
-          <label className="raw-midi-danger">
-            <input type="checkbox" checked={allowReset} onChange={(e) => setAllowReset(e.target.checked)} />
-            CC 56 is Factory Reset and resets the Live Hidden Options. Allow it.
-          </label>
-        )}
+        <button type="submit">Send CC</button>
       </form>
       <form
         aria-label="Send Program Change"

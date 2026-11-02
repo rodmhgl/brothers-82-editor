@@ -17,8 +17,6 @@ export type ParamDef = {
   min: number;
   max: number;
   default: number;
-  /** A centre the knob marks and snaps back to on double-click (e.g. flat EQ). */
-  detent?: number;
   help: string;
 };
 
@@ -36,15 +34,6 @@ export const LIVE_PROGRAM = 0;
 /** Save to Slot: value = Slot number (SPEC.md §4.6). */
 export const SAVE_TO_SLOT_CC = 111;
 
-/** Enters (≥1) or leaves (0) the Hidden Options, like holding both footswitches. Never sent by the editor (SPEC.md §4.4). */
-export const ALT_MENU_CC = 104;
-
-/** A second Swell CC: holding AUX, where CC 103 is pressing it. Never sent by the editor (SPEC.md §4.4). */
-export const SWELL_ALTERNATE_CC = 105;
-
-/** Factory Reset, any value: puts the Live Hidden Options back to their defaults. Saved Slots are untouched (SPEC.md §4.6). */
-export const FACTORY_RESET_CC = 56;
-
 const level = <Id extends string, Group extends 'knob' | 'hidden'>(
   id: Id,
   label: string,
@@ -59,9 +48,7 @@ const toggle3 = <Id extends string>(
   id: Id,
   label: string,
   cc: number,
-  group: 'toggle' | 'hidden',
   positions: readonly [string, string, string],
-  defaultValue: number,
   help: string,
 ) =>
   ({
@@ -70,25 +57,28 @@ const toggle3 = <Id extends string>(
     cc,
     kind: 'toggle3',
     values: positions.map((p, i) => ({ label: p, value: i + 1 })),
-    group,
+    group: 'toggle',
     scope: 'preset',
     min: 1,
     max: 3,
-    default: defaultValue,
+    default: 2,
     help,
   }) as const;
 
-const onOff = <Id extends string, Group extends ParamDef['group'], Scope extends ParamDef['scope']>(
+const onOff = <Id extends string, Group extends ParamDef['group']>(
   id: Id,
   label: string,
   cc: number,
   group: Group,
-  scope: Scope,
   defaultValue: number,
   help: string,
   values: { label: string; value: number }[] = SWITCH_VALUES,
-  // Off is 0; on is sent as the last value (127, or 3 for Shifty Response).
-) => ({ id, label, cc, kind: 'switch', values, group, scope, min: 0, max: values.at(-1)!.value, default: defaultValue, help }) as const;
+) => ({ id, label, cc, kind: 'switch', values, group, scope: 'preset', min: 0, max: 127, default: defaultValue, help }) as const;
+
+const BYPASS_VALUES = [
+  { label: 'Bypassed', value: 0 },
+  { label: 'Engaged', value: 127 },
+];
 
 const dip = <Id extends string>(
   id: Id,
@@ -97,69 +87,52 @@ const dip = <Id extends string>(
   group: 'dipLeft' | 'dipRight',
   help: string,
   values?: { label: string; value: number }[],
-) => onOff(id, label, cc, group, 'preset', 0, help, values);
+) => onOff(id, label, cc, group, 0, help, values);
 
 const target = <Id extends string>(id: Id, knob: string, cc: number) =>
-  dip(id, `${knob} target`, cc, 'dipLeft', `Lets ramping or an expression pedal move ${knob}.`);
+  dip(id, `${knob} target`, cc, 'dipLeft', `Lets an expression pedal or control voltage move ${knob}.`);
 
 export const PARAMS = {
-  // Knobs (SPEC.md §4.1). Defaults: the manual's "safe space" setting (hardware check #8).
-  dynamics: level('dynamics', 'Dynamics', 14, 'knob', 39, 'How hard the signal is clamped: compression up to noon, hard limiting at noon, then sag at the top.'),
-  sensitivity: level('sensitivity', 'Sensitivity', 15, 'knob', 77, 'What counts as too loud: higher reacts to quieter playing.'),
-  wet: level('wet', 'Wet', 16, 'knob', 77, 'Level of the compressed signal; can boost.'),
-  attack: level('attack', 'Attack', 17, 'knob', 39, 'How fast the compressor clamps down, 0.5 ms to 300 ms. Also the speed of the moving EQ modes and Motion.'),
-  eq: { ...level('eq', 'EQ', 18, 'knob', 64, 'Counter-clockwise removes highs, clockwise removes lows; noon is flat.'), detent: 64 },
-  dry: level('dry', 'Dry', 19, 'knob', 77, 'Level of the unprocessed signal; can boost.'),
+  // Knobs (SPEC.md §4.1).
+  gain2: level('gain2', 'Gain 2', 14, 'knob', 64, 'How much drive Channel 2, the amp side, adds.'),
+  vol2: level('vol2', 'Vol 2', 15, 'knob', 64, 'Output level of Channel 2.'),
+  gain1: level('gain1', 'Gain 1', 16, 'knob', 64, 'How much drive Channel 1, the overdrive side, adds.'),
+  tone2: level('tone2', 'Tone 2', 17, 'knob', 64, 'Tone of Channel 2.'),
+  vol1: level('vol1', 'Vol 1', 18, 'knob', 64, 'Output level of Channel 1.'),
+  tone1: level('tone1', 'Tone 1', 19, 'knob', 64, 'Tone of Channel 1.'),
   // Toggles (SPEC.md §4.2).
-  release: toggle3('release', 'Release', 21, 'toggle', ['Fast', 'User', 'Slow'], 2, 'How fast the compressor lets go: Fast (50 ms), User (the User Release Hidden Option) or Slow (1.5 s).'),
-  mode: toggle3('mode', 'Mode', 22, 'toggle', ['Shifty', 'Manual', 'Modulated'], 2, 'How the EQ behaves: Shifty opens toward full range as you play, Manual stays put, Modulated moves as you play.'),
-  physics: toggle3('physics', 'Physics', 23, 'toggle', ['Wobbly', 'Off', 'Twitchy'], 2, 'Adds unstable movement: Wobbly, none, or Twitchy.'),
-  // Hidden Options (SPEC.md §4.3), with Ramp Speed. Defaults from MIDI dumps of the pedal.
-  rampSpeed: level('rampSpeed', 'Ramp Speed', 20, 'hidden', 64, 'How fast ramping or bouncing moves; on the pedal, the SENSITIVITY knob sets this while ramping.'),
-  gateRelease: level('gateRelease', 'Gate Release', 24, 'hidden', 64, 'How quickly the Noise Gate closes again: faster to slower.'),
-  gateThreshold: level('gateThreshold', 'Gate Threshold', 25, 'hidden', 26, 'The level below which the Noise Gate mutes the input (with the Noise Gate dip on).'),
-  swellIn: level('swellIn', 'Swell In', 26, 'hidden', 64, 'How long a swell takes to fade in, 100 ms to 4 s.'),
-  userRelease: level('userRelease', 'User Release', 27, 'hidden', 64, 'The release time used with the Release toggle in the middle, 50 ms to 1.5 s.'),
-  envelopeBalance: level('envelopeBalance', 'Envelope Balance', 28, 'hidden', 0, 'Cuts lows from the signal that drives the compressor, so bass triggers it less. Not heard as filtering.'),
-  swellOut: level('swellOut', 'Swell Out', 29, 'hidden', 64, 'How long a swell takes to fade out, 100 ms to 4 s.'),
-  envelopeType: toggle3('envelopeType', 'Envelope Type', 31, 'hidden', ['Analog', 'Combo', 'Adaptive'], 1, 'The envelope follower: Analog, Combo (Analog attack with Adaptive release) or Adaptive.'),
-  // MIDI only: no control on the pedal sets it. Sent as ASR = 0 and Envelope = 3; 2 appears unused, so it is read as
-  // on/off: 0 ASR, ≥1 Envelope.
-  shiftyResponse: onOff('shiftyResponse', 'Shifty Response', 32, 'hidden', 'preset', 3, 'How the Shifty EQ mode moves: ASR or Envelope. Only affects the Shifty mode. MIDI only: no control on the pedal sets it.', [
-    { label: 'ASR', value: 0 },
-    { label: 'Envelope', value: 3 },
-  ]),
-  spreadRouting: toggle3('spreadRouting', 'Spread Routing', 33, 'hidden', ['EQ', 'Both', 'Volume'], 2, 'What the Spread dip moves in stereo: the EQ, both, or the volume (compressor and swell).'),
+  ampType: toggle3('ampType', 'Amp Type', 21, ['800', 'Plexi', 'Solo'], 'The voicing of Channel 2: 800, Plexi or Solo.'),
+  effectOrder: toggle3('effectOrder', 'Effect Order', 22, ['2>1', '2+1', '2<1'], 'How the Channels combine: Channel 2 feeds Channel 1 (2>1), in parallel (2+1), or Channel 1 feeds Channel 2 (2<1).'),
+  odType: toggle3('odType', 'OD Type', 23, ['808', 'Super', 'RJM'], 'The voicing of Channel 1: 808, Super or RJM.'),
+  // Hidden Options (SPEC.md §4.3). 64 is a placeholder until hardware check #3.
+  gateRelease: level('gateRelease', 'Gate Release', 27, 'hidden', 64, 'How quickly the Noise Gate re-engages (with the Noise Gate dip on).'),
+  gateThreshold: level('gateThreshold', 'Gate Threshold', 29, 'hidden', 64, 'The level below which the Noise Gate mutes the signal (with the Noise Gate dip on).'),
   // Footswitches (SPEC.md §4.4): both states are stored in a Preset.
-  bypass: onOff('bypass', 'Bypass', 102, 'footswitch', 'preset', 127, 'Engages (On) or bypasses (Off) the pedal, like tapping the right footswitch.'),
-  swell: onOff('swell', 'Swell', 103, 'footswitch', 'preset', 0, 'Engages the swell, like the AUX (left) footswitch. Dynamic or Manual depending on the Swell Aux dip.'),
+  channel1Bypass: onOff('channel1Bypass', 'Channel 1 Bypass', 102, 'footswitch', 0, 'Engages or bypasses Channel 1, like tapping the right footswitch.', BYPASS_VALUES),
+  channel2Bypass: onOff('channel2Bypass', 'Channel 2 Bypass', 103, 'footswitch', 127, 'Engages or bypasses Channel 2, like tapping the left footswitch.', BYPASS_VALUES),
   // Dip switches (SPEC.md §3.6, §4.5), left to right as seen from above the pedal.
-  dynamicsTarget: target('dynamicsTarget', 'Dynamics', 61),
-  attackTarget: target('attackTarget', 'Attack', 62),
-  eqTarget: target('eqTarget', 'EQ', 63),
-  dryTarget: target('dryTarget', 'Dry', 64),
-  wetTarget: target('wetTarget', 'Wet', 65),
-  bounce: dip('bounce', 'Bounce', 66, 'dipLeft', 'Ramping moves the targets back and forth continuously, instead of once when the pedal is engaged.'),
-  sweep: dip('sweep', 'Sweep', 67, 'dipLeft', 'Where the ramp or expression range sits: below the knob’s position (B) or above it (T).', [
+  volume1Target: target('volume1Target', 'Volume 1', 61),
+  volume2Target: target('volume2Target', 'Volume 2', 62),
+  gain1Target: target('gain1Target', 'Gain 1', 63),
+  gain2Target: target('gain2Target', 'Gain 2', 64),
+  tone1Target: target('tone1Target', 'Tone 1', 65),
+  tone2Target: target('tone2Target', 'Tone 2', 66),
+  sweep: dip('sweep', 'Sweep', 67, 'dipLeft', 'Which half of a knob’s range Expression moves through: bottom (B) or top (T).', [
     { label: 'B', value: 0 },
     { label: 'T', value: 127 },
   ]),
-  polarity: dip('polarity', 'Polarity', 68, 'dipLeft', 'Which way an expression pedal moves the targets: forward (F) or reversed (R).', [
+  polarity: dip('polarity', 'Polarity', 68, 'dipLeft', 'Which way Expression moves the targets: forward (F) or reverse (R).', [
     { label: 'F', value: 0 },
     { label: 'R', value: 127 },
   ]),
-  miso: dip('miso', 'Miso', 71, 'dipRight', 'Feeds a single input cable to both outputs, so a mono source comes out in stereo.'),
-  spread: dip('spread', 'Spread', 72, 'dipRight', 'Stereo motion and independent left/right dynamics; Spread Routing picks what moves.'),
-  latch: dip('latch', 'Latch', 73, 'dipRight', 'On the pedal, makes the AUX footswitch latch Swell instead of acting while held.'),
-  sidechain: dip('sidechain', 'Sidechain', 74, 'dipRight', 'The compressor follows the 1/8" sidechain input instead of your signal.'),
-  noiseGate: dip('noiseGate', 'Noise Gate', 75, 'dipRight', 'Turns on the noise gate, set by Gate Threshold and Gate Release.'),
-  motion: dip('motion', 'Motion', 76, 'dipRight', 'Modulates the amount of compression as you play: Dynamics sets the depth, Attack the rate.'),
-  swellAux: dip('swellAux', 'Swell Aux', 77, 'dipRight', 'Makes AUX a manual swell: hold to mute, release to swell in, tap for one swell.'),
-  dusty: dip('dusty', 'Dusty', 78, 'dipRight', 'Turns the limiter into a crumbly overdrive; Sensitivity sets roughly how much.'),
-  // Performance Controls (SPEC.md §4.4, §4.6): sent live, never stored in a Preset or sent by Send All.
-  dynamicsMax: onOff('dynamicsMax', 'Dynamics Max', 106, 'performance', 'performance', 0, 'Maxes out the sag while on, like holding the right footswitch.'),
-  // 0 = off, ≥1 = on, as the manual says (Lost+Found measured the reverse on its pedal).
-  ramping: onOff('ramping', 'Ramping', 52, 'performance', 'performance', 0, 'Lets ramping run (On) or stops it (Off).'),
+  noiseGate: dip('noiseGate', 'Noise Gate', 71, 'dipRight', 'Engages the noise gate, set by Gate Threshold and Gate Release.'),
+  clean1: dip('clean1', 'Clean 1', 72, 'dipRight', 'Removes most of the clipping from Channel 1, making it a clean boost that keeps each OD Type’s character.'),
+  motoByp1: dip('motoByp1', 'MotoByp 1', 73, 'dipRight', 'On the pedal, makes the Channel 1 footswitch momentary. The editor’s bypass buttons always latch.'),
+  motoByp2: dip('motoByp2', 'MotoByp 2', 74, 'dipRight', 'On the pedal, makes the Channel 2 footswitch momentary. The editor’s bypass buttons always latch.'),
+  contour2: dip('contour2', 'Contour 2', 75, 'dipRight', 'Inverts the midrange response of Channel 2.'),
+  presence2: dip('presence2', 'Presence 2', 76, 'dipRight', 'Inverts the high-frequency response of Channel 2.'),
+  master: dip('master', 'Master', 77, 'dipRight', 'Makes Vol 2 set the overall output volume at all times, even with Channel 2 bypassed.'),
+  // Performance Controls (SPEC.md §4.6): sent live, never stored in a Preset or sent by Send All.
   expression: {
     id: 'expression',
     label: 'Expression',
@@ -170,48 +143,31 @@ export const PARAMS = {
     min: 0,
     max: 127,
     default: 0,
-    help: 'Moves the Ramp / Expression targets like an expression pedal, from heel (0) to toe (127); Sensitivity if no target is on.',
+    help: 'Moves the Expression / CV targets like an expression pedal, from heel (0) to toe (127).',
   },
 } as const satisfies Record<string, ParamDef>;
 
 export type ParamId = keyof typeof PARAMS;
-
-/** A 3-position control's middle position: Release on User, Mode on Manual, Physics off. */
-export const TOGGLE_MIDDLE = 2;
-
-export type DynamicsZone = 'Compression' | 'Limiting' | 'Sag';
-
-/**
- * Where a Dynamics value sits in its sweep (SPEC.md §3.2): compression below noon, hard limiting from noon, then
- * sag from about 3 o'clock (102). On the pedal sag is clearly heard from about 105, and faintly below that.
- */
-export function dynamicsZone(value: number): DynamicsZone {
-  return value < 64 ? 'Compression' : value < 102 ? 'Limiting' : 'Sag';
-}
 
 /** Params saved in a Preset, and so held in the Working State. */
 export type PresetParamId = {
   [K in ParamId]: (typeof PARAMS)[K]['scope'] extends 'preset' ? K : never;
 }[ParamId];
 
-/** Performance Controls: Dynamics Max, Ramping and Expression. */
+/** Performance Controls: only Expression. */
 export type PerformanceParamId = {
   [K in ParamId]: (typeof PARAMS)[K]['scope'] extends 'performance' ? K : never;
 }[ParamId];
 
-/** The Ramp / Expression target dip for each knob that has one (CC 61–65). Any of them on engages ramping (SPEC.md §3.6). */
+/** The Expression / CV target dip for each knob (CC 61–66). */
 export const TARGET_DIPS: Partial<Record<PresetParamId, PresetParamId>> = {
-  dynamics: 'dynamicsTarget',
-  attack: 'attackTarget',
-  eq: 'eqTarget',
-  dry: 'dryTarget',
-  wet: 'wetTarget',
+  vol1: 'volume1Target',
+  vol2: 'volume2Target',
+  gain1: 'gain1Target',
+  gain2: 'gain2Target',
+  tone1: 'tone1Target',
+  tone2: 'tone2Target',
 };
-
-/** Whether ramping is engaged: true while any target dip is on (SPEC.md §3.6). */
-export function isRampingEngaged(dips: Record<PresetParamId, number>): boolean {
-  return Object.values(TARGET_DIPS).some((id) => isOn(dips[id]));
-}
 
 const byCc = new Map<number, ParamDef>(Object.values(PARAMS).map((p) => [p.cc, p]));
 
@@ -234,7 +190,7 @@ export function clampToParam(param: ParamDef, value: number): number {
   return Math.min(param.max, Math.max(param.min, Math.round(value)));
 }
 
-/** The name of the setting `value` gives a control with named settings, e.g. "Shifty" or "On"; undefined for a plain level. */
+/** The name of the setting `value` gives a control with named settings, e.g. "Plexi" or "On"; undefined for a plain level. */
 export function settingLabel(param: ParamDef, value: number): string | undefined {
   return param.values?.find((v) => v.value === value)?.label;
 }

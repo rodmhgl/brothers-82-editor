@@ -23,12 +23,4 @@ describe('help content', () => {
     const actions = blocks.flatMap((b) => (b.type === 'action' ? [b.id] : []));
     expect(actions.sort()).toEqual(['midi-channel-wizard', 'use-virtual-pedal']);
   });
-
-  it('has a How the controls interact guide covering threshold, amount, make-up gain and the Dynamics sweep', () => {
-    const guide = read('how-the-controls-interact.md');
-    expect(parseHelp(guide)[0]).toMatchObject({ type: 'heading', level: 2, text: [{ text: 'How the controls interact' }] });
-    for (const topic of [/Sensitivity/, /too loud/, /Dynamics/, /Wet/, /make[- ]up/i, /compression/, /limiting/, /sag/]) {
-      expect(guide).toMatch(topic);
-    }
-  });
 });

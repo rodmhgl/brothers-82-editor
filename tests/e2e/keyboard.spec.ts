@@ -28,15 +28,13 @@ test('the editor works from the keyboard alone', async ({ page }) => {
   const drawer = page.getByRole('complementary', { name: 'Data' });
   const lastSent = log.getByRole('listitem').last();
 
-  // Ctrl+H reaches the Hidden Options, at Gate Release; knobs move with the arrow keys.
-  await page.keyboard.press('Control+H');
-  const hidden = editor.getByRole('region', { name: 'Hidden Options' });
-  const gateRelease = hidden.getByRole('slider', { name: 'Gate Release' });
-  await expect(gateRelease).toBeFocused();
+  // Knobs move with the arrow keys.
+  const gateRelease = editor.getByRole('region', { name: 'Hidden Options' }).getByRole('slider', { name: 'Gate Release' });
+  await gateRelease.focus();
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowUp');
   await expect(gateRelease).toHaveAttribute('aria-valuenow', '66');
-  await expect(lastSent).toHaveText('CC 24 = 66 → Gate Release');
+  await expect(lastSent).toHaveText('CC 27 = 66 → Gate Release');
 
   await page.keyboard.press('Control+Z');
   await expect(gateRelease).toHaveAttribute('aria-valuenow', '65');
@@ -75,8 +73,8 @@ test('Ctrl+S saves to the Working State’s Preset, asking for a name the first 
   await drawer.getByRole('button', { name: 'Choose folder…' }).click();
   await drawer.getByRole('button', { name: 'Close Data drawer' }).click();
 
-  const dry = page.getByRole('region', { name: 'Editor' }).getByRole('slider', { name: 'Dry' });
-  await dry.press('ArrowUp');
+  const tone1 = page.getByRole('region', { name: 'Editor' }).getByRole('slider', { name: 'Tone 1' });
+  await tone1.press('ArrowUp');
   await page.keyboard.press('Control+S');
   const name = drawer.getByRole('form', { name: 'Save As' }).getByLabel('Preset name');
   await expect(name).toBeFocused();
@@ -86,7 +84,7 @@ test('Ctrl+S saves to the Working State’s Preset, asking for a name the first 
 
   // Once it has a Preset, Ctrl+S saves quietly.
   await drawer.getByRole('button', { name: 'Close Data drawer' }).click();
-  await dry.press('ArrowUp');
+  await tone1.press('ArrowUp');
   await expect(workingState).toHaveText('Keyed Up •');
   await page.keyboard.press('Control+S');
   await expect(workingState).toHaveText('Keyed Up');
@@ -146,7 +144,7 @@ test('every control has an accessible name and is reachable with Tab', async ({ 
 });
 
 test('the layout scales with the window and fits the minimum size', async ({ page }) => {
-  const knobWidth = async () => (await page.getByRole('region', { name: 'Editor' }).getByRole('slider', { name: 'Dynamics' }).boundingBox())!.width;
+  const knobWidth = async () => (await page.getByRole('region', { name: 'Editor' }).getByRole('slider', { name: 'Gain 2' }).boundingBox())!.width;
   const fitsWidth = () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 
   await page.setViewportSize({ width: 900, height: 600 });

@@ -5,26 +5,25 @@ import { CcNumber } from '../CcNumber';
 
 /** The labels printed beside each dip. */
 const SHORT: Partial<Record<PresetParamId, string>> = {
-  dynamicsTarget: 'Dyn',
-  attackTarget: 'Attack',
-  eqTarget: 'EQ',
-  dryTarget: 'Dry',
-  wetTarget: 'Wet',
-  bounce: 'Bounce',
+  volume1Target: 'Volume 1',
+  volume2Target: 'Volume 2',
+  gain1Target: 'Gain 1',
+  gain2Target: 'Gain 2',
+  tone1Target: 'Tone 1',
+  tone2Target: 'Tone 2',
   sweep: 'Sweep',
-  polarity: 'Pol',
-  miso: 'Miso',
-  spread: 'Spread',
-  latch: 'Latch',
-  sidechain: 'Side',
-  noiseGate: 'Gate',
-  motion: 'Motion',
-  swellAux: 'Swell Aux',
-  dusty: 'Dusty',
+  polarity: 'Polarity',
+  noiseGate: 'Noise Gate',
+  clean1: 'Clean 1',
+  motoByp1: 'MotoByp 1',
+  motoByp2: 'MotoByp 2',
+  contour2: 'Contour 2',
+  presence2: 'Presence 2',
+  master: 'Master',
 };
 
 const BANKS: { group: ParamDef['group']; title: string }[] = [
-  { group: 'dipLeft', title: 'Ramp / Expression targets' },
+  { group: 'dipLeft', title: 'Expression / CV targets' },
   { group: 'dipRight', title: 'Customize' },
 ];
 

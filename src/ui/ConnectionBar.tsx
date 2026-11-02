@@ -114,7 +114,7 @@ export function ConnectionBar() {
           type="button"
           className="text-button"
           disabled={!connected || testing}
-          title="Flips Bypass, then puts it back, so you can see the LED change."
+          title="Flips Channel 2 Bypass, then puts it back, so you can see the LED change."
           onClick={async () => {
             setTesting(true);
             await test();

@@ -36,13 +36,12 @@ describe('MIDI Monitor log', () => {
 
 describe('describeSent', () => {
   it.each([
-    [[0xb1, 15, 90], { type: 'CC', number: '15', value: '90', label: 'Sensitivity' }],
-    [[0xb1, 22, 2], { type: 'CC', number: '22', value: '2', label: 'Mode · Manual' }],
-    [[0xb1, 74, 127], { type: 'CC', number: '74', value: '127', label: 'Sidechain · On' }],
+    [[0xb1, 15, 90], { type: 'CC', number: '15', value: '90', label: 'Vol 2' }],
+    [[0xb1, 22, 2], { type: 'CC', number: '22', value: '2', label: 'Effect Order · 2+1' }],
+    [[0xb1, 74, 127], { type: 'CC', number: '74', value: '127', label: 'MotoByp 2 · On' }],
     [[0xb1, 67, 127], { type: 'CC', number: '67', value: '127', label: 'Sweep · T' }],
     [[0xb1, 111, 5], { type: 'CC', number: '111', value: '5', label: 'Store to Slot 5' }],
-    [[0xb1, 105, 127], { type: 'CC', number: '105', value: '127', label: 'AUX hold' }],
-    [[0xb1, 56, 127], { type: 'CC', number: '56', value: '127', label: 'Factory Reset' }],
+    [[0xb1, 56, 127], { type: 'CC', number: '56', value: '127', label: '—' }],
     [[0xb1, 9, 1], { type: 'CC', number: '9', value: '1', label: '—' }],
     [[0xc1, 0], { type: 'PC', number: '0', value: '', label: 'Live' }],
     [[0xc1, 7], { type: 'PC', number: '7', value: '', label: 'Recall Slot 7' }],

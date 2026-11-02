@@ -35,118 +35,58 @@ async function saveAs(page: Page, name: string) {
 test('both dip banks send their CCs and are stored in a Preset', async ({ page }) => {
   await page.goto('/');
   const dips = page.getByRole('region', { name: 'Dip switches' });
-  const targets = dips.getByRole('group', { name: 'Ramp / Expression targets' });
+  const targets = dips.getByRole('group', { name: 'Expression / CV targets' });
   const customize = dips.getByRole('group', { name: 'Customize' });
   const pedal = page.getByRole('region', { name: 'Virtual Pedal' });
   const last = pedal.getByRole('log').getByRole('listitem').last();
 
-  await expect(targets.getByRole('switch')).toHaveText(['Dyn', 'Attack', 'EQ', 'Dry', 'Wet', 'Bounce', 'Sweep B', 'Pol F']);
-  await expect(customize.getByRole('switch')).toHaveText(['Miso', 'Spread', 'Latch', 'Side', 'Gate', 'Motion', 'Swell Aux', 'Dusty']);
+  await expect(targets.getByRole('switch')).toHaveText(['Volume 1', 'Volume 2', 'Gain 1', 'Gain 2', 'Tone 1', 'Tone 2', 'Sweep B', 'Polarity F']);
+  await expect(customize.getByRole('switch')).toHaveText(['Noise Gate', 'Clean 1', 'MotoByp 1', 'MotoByp 2', 'Contour 2', 'Presence 2', 'Master']);
 
-  await targets.getByRole('switch', { name: 'Bounce' }).click();
-  await expect(last).toHaveText('CC 66 = 127 → Bounce → On');
-  await customize.getByRole('switch', { name: 'Miso' }).click();
-  await expect(last).toHaveText('CC 71 = 127 → Miso → On');
-  await expect(pedal.getByLabel('Dips on')).toHaveText('Bounce, Miso');
+  await targets.getByRole('switch', { name: 'Tone 2 target' }).click();
+  await expect(last).toHaveText('CC 66 = 127 → Tone 2 target → On');
+  await customize.getByRole('switch', { name: 'Clean 1' }).click();
+  await expect(last).toHaveText('CC 72 = 127 → Clean 1 → On');
+  await expect(pedal.getByLabel('Dips on')).toHaveText('Tone 2 target, Clean 1');
 
-  await saveAs(page, 'Wide Bounce');
-  expect((await readOnlyPresetFile(page)).params).toMatchObject({ bounce: 127, miso: 127, motion: 0, polarity: 0 });
+  await saveAs(page, 'Clean Boost');
+  expect((await readOnlyPresetFile(page)).params).toMatchObject({ tone2Target: 127, clean1: 127, contour2: 0, polarity: 0 });
 
   const drawer = page.getByRole('complementary', { name: 'Data' });
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('button', { name: 'New' }).click();
-  await expect(targets.getByRole('switch', { name: 'Bounce' })).toHaveAttribute('aria-checked', 'false');
-  await drawer.getByRole('list', { name: 'Presets' }).getByRole('button', { name: 'Recall Wide Bounce' }).click();
-  await expect(targets.getByRole('switch', { name: 'Bounce' })).toHaveAttribute('aria-checked', 'true');
-  await expect(customize.getByRole('switch', { name: 'Miso' })).toHaveAttribute('aria-checked', 'true');
-  await expect(pedal.getByLabel('Dips on')).toHaveText('Bounce, Miso');
+  await expect(targets.getByRole('switch', { name: 'Tone 2 target' })).toHaveAttribute('aria-checked', 'false');
+  await drawer.getByRole('list', { name: 'Presets' }).getByRole('button', { name: 'Recall Clean Boost' }).click();
+  await expect(targets.getByRole('switch', { name: 'Tone 2 target' })).toHaveAttribute('aria-checked', 'true');
+  await expect(customize.getByRole('switch', { name: 'Clean 1' })).toHaveAttribute('aria-checked', 'true');
+  await expect(pedal.getByLabel('Dips on')).toHaveText('Tone 2 target, Clean 1');
 });
 
-test('Dynamics Max is momentary, latches on shift-click whatever Latch says, and is never stored', async ({ page }) => {
+test('Gate Threshold and Gate Release are decoded by the Virtual Pedal', async ({ page }) => {
   await page.goto('/');
-  const performance = page.getByRole('region', { name: 'Performance' });
-  const dynamicsMax = performance.getByRole('button', { name: 'Dynamics Max' });
-  const log = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log');
-  const last = log.getByRole('listitem').last();
+  const panel = page.getByRole('region', { name: 'Hidden Options' });
+  const last = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log').getByRole('listitem').last();
 
-  // Latch on the pedal only changes the AUX footswitch.
-  await page.getByRole('region', { name: 'Dip switches' }).getByRole('switch', { name: 'Latch' }).click();
-
-  // Momentary: on while held; pressing and leaving with the keyboard (blur) lets go too.
-  await dynamicsMax.focus();
-  await page.keyboard.down('Enter');
-  await expect(last).toHaveText('CC 106 = 127 → Dynamics Max → On');
-  await expect(dynamicsMax).toHaveAttribute('aria-pressed', 'true');
-  await page.keyboard.press('Tab');
-  await expect(last).toHaveText('CC 106 = 0 → Dynamics Max → Off');
-  await page.keyboard.up('Enter');
-  await expect(dynamicsMax).toHaveAttribute('aria-pressed', 'false');
-
-  // Latched: shift-click holds it on through release and blur, until it is clicked again.
-  await dynamicsMax.click({ modifiers: ['Shift'] });
-  await expect(last).toHaveText('CC 106 = 127 → Dynamics Max → On');
-  await expect(dynamicsMax).toHaveAttribute('aria-pressed', 'true');
-  await expect(dynamicsMax).toContainText('latched');
-  await page.getByRole('region', { name: 'Editor' }).getByRole('slider', { name: 'Sensitivity' }).focus();
-  await expect(dynamicsMax).toHaveAttribute('aria-pressed', 'true');
-  await expect(log.getByText('CC 106 = 0 → Dynamics Max → Off')).toHaveCount(1);
-
-  await saveAs(page, 'Sag');
-  expect((await readOnlyPresetFile(page)).params).not.toHaveProperty('dynamicsMax');
-
-  await dynamicsMax.click();
-  await expect(last).toHaveText('CC 106 = 0 → Dynamics Max → Off');
-  await expect(dynamicsMax).toHaveAttribute('aria-pressed', 'false');
-  await expect(dynamicsMax).not.toContainText('latched');
+  await panel.getByRole('slider', { name: 'Gate Threshold' }).press('ArrowUp');
+  await expect(last).toHaveText('CC 29 = 65 → Gate Threshold');
+  await panel.getByRole('slider', { name: 'Gate Release' }).press('ArrowUp');
+  await expect(last).toHaveText('CC 27 = 65 → Gate Release');
 });
 
-test('Expression and Ramping are sent live, never stored or sent by Send All', async ({ page }) => {
+test('Expression is sent live, never stored or sent by Send All', async ({ page }) => {
   await page.goto('/');
   const performance = page.getByRole('region', { name: 'Performance' });
   const log = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log');
 
   await performance.getByRole('slider', { name: 'Expression' }).fill('40');
   await expect(log.getByRole('listitem').last()).toHaveText('CC 100 = 40 → Expression');
-  await performance.getByRole('button', { name: /Ramping/ }).click();
-  await expect(log.getByRole('listitem').last()).toHaveText('CC 52 = 127 → Ramping → On');
 
   await saveAs(page, 'Moving');
-  const params = (await readOnlyPresetFile(page)).params;
-  expect(params).not.toHaveProperty('expression');
-  expect(params).not.toHaveProperty('ramping');
+  expect((await readOnlyPresetFile(page)).params).not.toHaveProperty('expression');
 
-  const performanceLines = log.getByRole('listitem').filter({ hasText: /→ (Expression|Ramping|Dynamics Max)/ });
-  await expect(performanceLines).toHaveCount(2);
+  const expressionLines = log.getByRole('listitem').filter({ hasText: /→ Expression/ });
+  await expect(expressionLines).toHaveCount(1);
   await page.getByRole('banner', { name: 'Connection' }).getByRole('button', { name: 'Send All' }).click();
   await expect(log.getByRole('listitem').last()).toHaveText(/^CC 103 = /);
-  await expect(performanceLines).toHaveCount(2);
-});
-
-test('the Virtual Pedal log notes what dips and Shifty Response do', async ({ page }) => {
-  await page.goto('/');
-  const dips = page.getByRole('region', { name: 'Dip switches' });
-  const editor = page.getByRole('region', { name: 'Editor' });
-  const last = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log').getByRole('listitem').last();
-
-  await dips.getByRole('switch', { name: 'EQ target' }).click();
-  await expect(last).toHaveText('CC 63 = 127 → EQ target → On · Ramping engaged: SENSITIVITY knob now sets ramp speed');
-  await dips.getByRole('switch', { name: 'Wet target' }).click();
-  await expect(last).toHaveText('CC 65 = 127 → Wet target → On');
-
-  await dips.getByRole('switch', { name: 'Dusty' }).click();
-  await expect(last).toHaveText('CC 78 = 127 → Dusty → On · Dusty: limiter is now an overdrive');
-  await dips.getByRole('switch', { name: 'Sidechain' }).click();
-  await expect(last).toHaveText('CC 74 = 127 → Sidechain → On · Sidechain: following the external input');
-  await dips.getByRole('switch', { name: 'Swell Aux' }).click();
-  await expect(last).toHaveText('CC 77 = 127 → Swell Aux → On · Swell Aux: AUX now triggers manual swells');
-
-  // Mode starts in Manual, so Shifty Response does nothing yet.
-  const shiftyResponse = editor.getByRole('group', { name: /Shifty Response/ });
-  await shiftyResponse.getByRole('radio', { name: 'ASR' }).check();
-  await expect(last).toHaveText(
-    'CC 32 = 0 → Shifty Response → ASR · Shifty Response has no effect outside the Shifty EQ mode',
-  );
-  await editor.getByRole('group', { name: 'Mode' }).getByRole('radio', { name: 'Shifty' }).check();
-  await shiftyResponse.getByRole('radio', { name: 'Envelope' }).check();
-  await expect(last).toHaveText('CC 32 = 3 → Shifty Response → Envelope');
+  await expect(expressionLines).toHaveCount(1);
 });

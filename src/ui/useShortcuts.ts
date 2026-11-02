@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { DATA_BUTTON_ID, DATA_DRAWER_ID, HIDDEN_OPTIONS_ID, drawerTabId } from './domIds';
+import { DATA_BUTTON_ID, DATA_DRAWER_ID, drawerTabId } from './domIds';
 import { PARAMS, isOn, switchValue } from '../midi/map';
 import { useEditorStore } from '../store/editorStore';
 import { useLayoutStore } from '../store/layoutStore';
@@ -7,39 +7,39 @@ import { libraryReachable, useLibraryStore } from '../store/library';
 
 type KeyLike = Pick<KeyboardEvent, 'key' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey' | 'repeat'>;
 
-type Command = 'save' | 'sendAll' | 'hiddenOptions';
+type Command = 'save' | 'sendAll';
 
-/** The footswitches, stored in the Working State. */
-type FootswitchId = 'bypass' | 'swell';
+/** The Channel Bypass footswitches, stored in the Working State. */
+type FootswitchId = 'channel1Bypass' | 'channel2Bypass';
 
 export type Shortcut = { type: 'undo' | 'redo' | 'help' | Command | FootswitchId };
 
 /** The key that toggles each footswitch, like tapping it. */
-export const FOOTSWITCH_KEYS: Record<FootswitchId, string> = { bypass: 'B', swell: 'W' };
+export const FOOTSWITCH_KEYS: Record<FootswitchId, string> = { channel1Bypass: '1', channel2Bypass: '2' };
 
 /** ⌘ (Ctrl elsewhere) + key. */
-const COMMANDS: Record<string, Command> = { s: 'save', e: 'sendAll', h: 'hiddenOptions' };
+const COMMANDS: Record<string, Command> = { s: 'save', e: 'sendAll' };
 
 /** A key on its own. */
 const KEYS: Record<string, Shortcut['type']> = {
-  [FOOTSWITCH_KEYS.bypass.toLowerCase()]: 'bypass',
-  [FOOTSWITCH_KEYS.swell.toLowerCase()]: 'swell',
+  [FOOTSWITCH_KEYS.channel1Bypass]: 'channel1Bypass',
+  [FOOTSWITCH_KEYS.channel2Bypass]: 'channel2Bypass',
   '?': 'help',
 };
 
 /** Fields whose own text undo ⌘Z should reach instead. */
 const TEXT_EDIT = 'input:not([type="checkbox"], [type="radio"], [type="range"], [type="button"]), textarea, [contenteditable]';
 
-/** Fields where ?, B and W are typed (or pick an option) rather than acting as shortcuts. */
+/** Fields where ?, 1 and 2 are typed (or pick an option) rather than acting as shortcuts. */
 const TEXT_ENTRY = `${TEXT_EDIT}, select`;
 
-/** Where a key belongs to the focused field instead. ⌘S, ⌘E and ⌘H mean nothing to a field, so work everywhere. */
+/** Where a key belongs to the focused field instead. ⌘S and ⌘E mean nothing to a field, so work everywhere. */
 const TEXT_OWNS: Partial<Record<Shortcut['type'], string>> = {
   undo: TEXT_EDIT,
   redo: TEXT_EDIT,
   help: TEXT_ENTRY,
-  bypass: TEXT_ENTRY,
-  swell: TEXT_ENTRY,
+  channel1Bypass: TEXT_ENTRY,
+  channel2Bypass: TEXT_ENTRY,
 };
 
 /**
@@ -69,14 +69,13 @@ export const SHORTCUTS: { keys(mac: boolean): string; action: string }[] = [
   { keys: (mac) => command('S', mac), action: 'Save' },
   { keys: (mac) => command('Z', mac), action: 'Undo' },
   { keys: (mac) => command('Z', mac, true), action: 'Redo' },
-  { keys: () => FOOTSWITCH_KEYS.bypass, action: 'Toggle Bypass' },
-  { keys: () => FOOTSWITCH_KEYS.swell, action: 'Toggle Swell' },
+  { keys: () => FOOTSWITCH_KEYS.channel1Bypass, action: 'Toggle Channel 1 Bypass' },
+  { keys: () => FOOTSWITCH_KEYS.channel2Bypass, action: 'Toggle Channel 2 Bypass' },
   { keys: (mac) => command('E', mac), action: 'Send All' },
-  { keys: (mac) => command('H', mac), action: 'Hidden Options panel' },
   { keys: () => '?', action: 'Help' },
 ];
 
-/** B / W: flips a footswitch, like tapping it. */
+/** 1 / 2: flips a Channel Bypass, like tapping it. */
 function toggleFootswitch(id: FootswitchId) {
   const editor = useEditorStore.getState();
   editor.setParam(id, switchValue(PARAMS[id], !isOn(editor.editor.working[id])));
@@ -92,13 +91,6 @@ async function save() {
   } catch (e) {
     layout.requestLibrary({ kind: 'error', message: e instanceof Error ? e.message : String(e) });
   }
-}
-
-/** ⌘H: moves focus to the Hidden Options panel's first control. */
-function focusHiddenOptions() {
-  const panel = document.getElementById(HIDDEN_OPTIONS_ID);
-  panel?.scrollIntoView({ block: 'nearest' });
-  panel?.querySelector<HTMLElement>('[role="slider"]')?.focus();
 }
 
 /** ?: opens Help with focus on its tab, or closes it, handing focus back to the Data button if it was inside. */
@@ -122,10 +114,8 @@ function run(shortcut: Shortcut) {
       return void save();
     case 'sendAll':
       return void editor.sendAll();
-    case 'hiddenOptions':
-      return focusHiddenOptions();
-    case 'bypass':
-    case 'swell':
+    case 'channel1Bypass':
+    case 'channel2Bypass':
       return toggleFootswitch(shortcut.type);
     case 'help':
       return toggleHelp();
