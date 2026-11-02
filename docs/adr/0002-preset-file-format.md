@@ -1,0 +1,3 @@
+# Preset files keep the Clean shape but refuse other pedals' files
+
+A Preset file (`*.b82preset.json`) and a Bundle (`*.b82bundle.json`) use the same envelope and flat raw `params` map as the Clean editor's ADR 0002 (frozen param IDs, `schemaVersion` with step migrations, newer versions refused, identity by UUID). The `format` string (`brothers-82-preset` / `brothers-82-bundle`) is the only pedal discriminator, so a file whose `format` does not match is refused outright, naming the pedal it appears to belong to, rather than loaded best-effort: best-effort loading would drop every unknown param and silently produce an all-defaults Preset.

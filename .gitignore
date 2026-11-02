@@ -1,0 +1,10 @@
+# Chase Bliss manuals — copyrighted, kept locally as references only
+*.pdf
+
+node_modules/
+dist/
+.vite/
+.DS_Store
+test-results/
+playwright-report/
+*.tsbuildinfo
