@@ -47,7 +47,7 @@ export function App() {
           <GlobalSettingsPanel />
           <VirtualPedalView pedal={virtualPedal} />
           <footer className="affiliation-notice">
-            Unofficial, free and open-source editor for the Clean pedal. Not affiliated with or endorsed by the
+            Unofficial, free and open-source editor for the Brothers 82 pedal. Not affiliated with or endorsed by the
             pedal's maker.
           </footer>
         </main>

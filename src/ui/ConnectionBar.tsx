@@ -61,7 +61,7 @@ export function ConnectionBar() {
   return (
     <header className="top-bar" aria-label="Connection">
       <h1 className="wordmark">
-        Clean<span> / Editor</span>
+        Brothers 82<span> / Editor</span>
       </h1>
       <output className="working-state-name" aria-label="Working State" title={modified ? MODIFIED_HELP : undefined}>
         {workingStateName}

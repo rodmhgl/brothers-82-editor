@@ -595,14 +595,14 @@ export function directoryFolder(dir: FileSystemDirectoryHandle): PickedFolder {
 
 async function pickDirectory(): Promise<PickedFolder | null> {
   try {
-    return directoryFolder(await window.showDirectoryPicker({ id: 'clean-library', mode: 'readwrite' }));
+    return directoryFolder(await window.showDirectoryPicker({ id: 'brothers-82-library', mode: 'readwrite' }));
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') return null;
     throw e;
   }
 }
 
-const LIBRARY_DB = 'clean-library';
+const LIBRARY_DB = 'brothers-82-library';
 /** The browser storage Library's Preset files. */
 const FILES_STORE = 'files';
 /** The remembered Library folder. */
@@ -709,7 +709,7 @@ async function inFolderStore(mode: IDBTransactionMode, request: (store: IDBObjec
   }
 }
 
-const BACKUP_KEY = 'clean-library-backup-checked-at';
+const BACKUP_KEY = 'brothers-82-library-backup-checked-at';
 
 /** Kept in localStorage; any failure (a private window, blocked storage) only means the reminder shows again. */
 const localBackupLog: LibraryDeps['backupLog'] = {

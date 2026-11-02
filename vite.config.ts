@@ -18,9 +18,9 @@ export default defineConfig({
       // main.tsx registers it, through the app store.
       injectRegister: false,
       manifest: {
-        name: 'Clean Editor',
-        short_name: 'Clean',
-        description: 'Unofficial, free and open-source editor for the Clean pedal.',
+        name: 'Brothers 82 Editor',
+        short_name: 'Brothers 82',
+        description: 'Unofficial, free and open-source editor for the Brothers 82 pedal.',
         start_url: './',
         scope: './',
         display: 'standalone',

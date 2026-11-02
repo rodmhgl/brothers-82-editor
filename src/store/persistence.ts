@@ -82,7 +82,7 @@ export async function startSession(storage: SessionStorage, stores: SessionStore
   return keepSession(storage, stores);
 }
 
-const SESSION_DB = 'clean-session';
+const SESSION_DB = 'brothers-82-session';
 const SESSION_STORE = 'session';
 const SESSION_KEY = 'last';
 

@@ -37,7 +37,7 @@ export const useLayoutStore = create<LayoutStore>()(
       clearLibraryRequest: () => set({ libraryRequest: null }),
     }),
     {
-      name: 'clean-layout',
+      name: 'brothers-82-layout',
       partialize: ({ drawerOpen, drawerTab }) => ({ drawerOpen, drawerTab }),
     },
   ),

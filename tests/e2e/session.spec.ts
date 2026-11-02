@@ -5,7 +5,7 @@ function savedSession(page: Page) {
   return page.evaluate(
     () =>
       new Promise<Record<string, unknown> | undefined>((resolve, reject) => {
-        const open = indexedDB.open('clean-session');
+        const open = indexedDB.open('brothers-82-session');
         open.onerror = () => reject(open.error);
         open.onsuccess = () => {
           const db = open.result;
@@ -110,4 +110,14 @@ test('a theme recolours the editor at once and is kept between sessions', async 
 
   await expect.poll(paper).toBe('rgb(42, 45, 46)');
   await expect(drawer.getByLabel('Theme')).toHaveValue('charcoal');
+});
+
+test('the editor stores its data under its own names', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Data/ }).click();
+  await page.getByRole('complementary', { name: 'Data' }).getByRole('tab', { name: 'Library' }).click();
+
+  const databases = () => page.evaluate(async () => (await indexedDB.databases()).map((db) => db.name).sort());
+  await expect.poll(databases).toEqual(['brothers-82-library', 'brothers-82-session']);
+  expect(await page.evaluate(() => Object.keys(localStorage))).toContain('brothers-82-layout');
 });

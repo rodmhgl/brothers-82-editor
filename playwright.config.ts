@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /** pwa.spec.ts serves the build under a project path, as GitHub Pages does. */
-export const PAGES_URL = 'http://localhost:4174/clean-editor/';
+export const PAGES_URL = 'http://localhost:4174/brothers-82-editor/';
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -22,7 +22,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: 'npm run preview -- --port 4174 --strictPort --base /clean-editor/',
+      command: 'npm run preview -- --port 4174 --strictPort --base /brothers-82-editor/',
       url: PAGES_URL,
       reuseExistingServer: !process.env.CI,
     },

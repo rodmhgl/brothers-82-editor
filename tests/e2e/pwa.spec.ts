@@ -5,14 +5,14 @@ test.use({ serviceWorkers: 'allow', baseURL: PAGES_URL });
 
 test('serves a manifest that makes the editor installable under the project path', async ({ page, request }) => {
   await page.goto('./');
-  await expect(page).toHaveTitle('Clean Editor');
+  await expect(page).toHaveTitle('Brothers 82 Editor');
   const href = await page.locator('link[rel="manifest"]').getAttribute('href');
   const response = await request.get(new URL(href!, page.url()).href);
   expect(response.ok()).toBe(true);
   const manifest = await response.json();
   expect(manifest).toMatchObject({
-    name: 'Clean Editor',
-    short_name: 'Clean',
+    name: 'Brothers 82 Editor',
+    short_name: 'Brothers 82',
     display: 'standalone',
     start_url: './',
     scope: './',
