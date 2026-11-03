@@ -10,14 +10,14 @@ import type { WorkingSource } from './library';
 // What the editor keeps between sessions (SPEC.md §5.11), and how it reads it back: anything stored may be from an
 // older build or damaged, so every field is checked and falls back to its default.
 
-/** The palettes the editor can be shown in, each named for the Settings tab. `light` is Paper, the original. */
+/** The palettes the editor can be shown in, each named for the Settings tab. `cream` is the default. */
 export const THEMES = {
-  light: 'Paper',
   cream: 'Manual Cream',
-  'teal-mist': 'Teal Mist',
-  charcoal: 'Charcoal (dark)',
-  'signal-orange': 'Signal Orange',
-  'three-lights': 'Three Lights',
+  page: 'Manual Page',
+  pink: 'Pink',
+  'plum-ink': 'Plum Ink',
+  'plum-night': 'Plum Night (dark)',
+  'amber-night': 'Amber Night (dark)',
 } as const;
 
 export type Theme = keyof typeof THEMES;
@@ -52,7 +52,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSendAll: true,
   sendThrottleMs: 2,
   knobSensitivity: 1,
-  theme: 'light',
+  theme: 'cream',
   uiScale: 100,
   showCcNumbers: true,
   confirmOverwrite: true,

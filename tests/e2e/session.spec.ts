@@ -111,18 +111,18 @@ test('a theme recolours the editor at once and is kept between sessions', async 
   const paper = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   const themeColor = page.locator('meta[name="theme-color"]');
 
-  expect(await paper()).toBe('rgb(243, 239, 230)');
+  expect(await paper()).toBe('rgb(254, 241, 227)');
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('tab', { name: 'Settings' }).click();
-  await drawer.getByLabel('Theme').selectOption('Charcoal (dark)');
-  await expect.poll(paper).toBe('rgb(42, 45, 46)');
-  await expect(themeColor).toHaveAttribute('content', '#2a2d2e');
-  await expect.poll(async () => (await savedSession(page))?.settings).toMatchObject({ theme: 'charcoal' });
+  await drawer.getByLabel('Theme').selectOption('Plum Night (dark)');
+  await expect.poll(paper).toBe('rgb(46, 19, 34)');
+  await expect(themeColor).toHaveAttribute('content', '#2e1322');
+  await expect.poll(async () => (await savedSession(page))?.settings).toMatchObject({ theme: 'plum-night' });
 
   await page.reload();
 
-  await expect.poll(paper).toBe('rgb(42, 45, 46)');
-  await expect(drawer.getByLabel('Theme')).toHaveValue('charcoal');
+  await expect.poll(paper).toBe('rgb(46, 19, 34)');
+  await expect(drawer.getByLabel('Theme')).toHaveValue('plum-night');
 });
 
 test('the editor stores its data under its own names', async ({ page }) => {

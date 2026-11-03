@@ -18,7 +18,7 @@ const saved: Session = {
     autoSendAll: false,
     sendThrottleMs: 10,
     knobSensitivity: 2,
-    theme: 'light',
+    theme: 'plum-night',
     uiScale: 150,
     showCcNumbers: false,
     confirmOverwrite: false,
@@ -90,6 +90,12 @@ describe('parseSession', () => {
     expect(session.outputId).toBe('virtual-pedal');
     expect(session.inputId).toBeNull();
     expect(session.settings).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('falls back to the default theme for a theme from an older build', () => {
+    for (const theme of ['light', 'charcoal', 'teal-mist']) {
+      expect(parseSession({ ...stored(saved), settings: { ...saved.settings, theme } })!.settings.theme).toBe('cream');
+    }
   });
 
   it('keeps every offered theme', () => {

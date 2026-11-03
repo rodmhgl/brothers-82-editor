@@ -68,7 +68,7 @@ export function SettingsTab() {
           </select>
         )}
       </Setting>
-      <Setting label="Theme" help="The editor’s colours, all taken from the pedal’s manuals except Paper.">
+      <Setting label="Theme" help="The editor’s colours, all drawn from the plum, pink, amber and cream of the pedal’s manual.">
         {(props) => (
           <select {...props} value={theme} onChange={(e) => isTheme(e.target.value) && update({ theme: e.target.value })}>
             {Object.entries(THEMES).map(([id, name]) => (
