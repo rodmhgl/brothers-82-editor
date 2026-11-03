@@ -124,9 +124,9 @@ beforeEach(() => {
 describe('picking a Library folder', () => {
   it('lists its Presets by name and reports files it could not read', async () => {
     const { folder } = memoryFolder({
-      'zed.cleanpreset.json': serializePreset(preset('Zed')),
-      'shimmer-tape.cleanpreset.json': serializePreset(preset('Shimmer Tape')),
-      'broken.cleanpreset.json': '{ nope',
+      'zed.b82preset.json': serializePreset(preset('Zed')),
+      'shimmer-tape.b82preset.json': serializePreset(preset('Shimmer Tape')),
+      'broken.b82preset.json': '{ nope',
       'notes.txt': 'not json',
     });
     await setup(folder);
@@ -134,21 +134,35 @@ describe('picking a Library folder', () => {
     const { folderName, presets, problems } = library.getState();
     expect(folderName).toBe('My Presets');
     expect(presets.map((p) => [p.preset.name, p.fileName])).toEqual([
-      ['Shimmer Tape', 'shimmer-tape.cleanpreset.json'],
-      ['Zed', 'zed.cleanpreset.json'],
+      ['Shimmer Tape', 'shimmer-tape.b82preset.json'],
+      ['Zed', 'zed.b82preset.json'],
     ]);
-    expect(problems).toEqual(['broken.cleanpreset.json: Not a Preset file']);
+    expect(problems).toEqual(['broken.b82preset.json: Not a Preset file']);
+  });
+
+  it('refuses a Clean Preset in the folder, naming its pedal, rather than listing it', async () => {
+    const clean = { format: 'clean-preset', schemaVersion: 1, id: 'c-1', name: 'Glass', params: {} };
+    const { folder } = memoryFolder({
+      'zed.b82preset.json': serializePreset(preset('Zed')),
+      'glass.cleanpreset.json': JSON.stringify(clean),
+    });
+    await setup(folder);
+
+    expect(library.getState().presets.map((p) => p.preset.name)).toEqual(['Zed']);
+    expect(library.getState().problems).toEqual([
+      'glass.cleanpreset.json: This is a Clean Preset, open it in the Clean editor',
+    ]);
   });
 
   it('keeps the first of two files with the same id', async () => {
     const { folder } = memoryFolder({
-      'a.cleanpreset.json': serializePreset(preset('A', {}, 'same')),
-      'b.cleanpreset.json': serializePreset(preset('B', {}, 'same')),
+      'a.b82preset.json': serializePreset(preset('A', {}, 'same')),
+      'b.b82preset.json': serializePreset(preset('B', {}, 'same')),
     });
     await setup(folder);
 
     expect(library.getState().presets.map((p) => p.preset.name)).toEqual(['A']);
-    expect(library.getState().problems).toEqual(['b.cleanpreset.json: same id as a.cleanpreset.json, skipped']);
+    expect(library.getState().problems).toEqual(['b.b82preset.json: same id as a.b82preset.json, skipped']);
   });
 
   it('stays as it was if the user cancels the picker', async () => {
@@ -192,7 +206,7 @@ describe('the remembered Library folder', () => {
   });
 
   it('opens silently when the browser still allows it', async () => {
-    const { folder, asked } = memoryFolder({ 'zed.cleanpreset.json': serializePreset(preset('Zed')) });
+    const { folder, asked } = memoryFolder({ 'zed.b82preset.json': serializePreset(preset('Zed')) });
     remembered = folder;
 
     await launch();
@@ -218,7 +232,7 @@ describe('the remembered Library folder', () => {
   });
 
   it('waits for a click when the browser needs to ask, then opens on Reopen', async () => {
-    const { folder, asked } = memoryFolder({ 'zed.cleanpreset.json': serializePreset(preset('Zed')) }, 'prompt', 'granted');
+    const { folder, asked } = memoryFolder({ 'zed.b82preset.json': serializePreset(preset('Zed')) }, 'prompt', 'granted');
     remembered = folder;
 
     await launch();
@@ -261,7 +275,7 @@ describe('the remembered Library folder', () => {
   it('is opened by Save, in the same click, which then carries on', async () => {
     const shimmer = preset('Shimmer Tape');
     const { folder, files, asked } = memoryFolder(
-      { 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) },
+      { 'shimmer-tape.b82preset.json': serializePreset(shimmer) },
       'prompt',
       'granted',
     );
@@ -274,7 +288,7 @@ describe('the remembered Library folder', () => {
     expect(await library.getState().save()).toBe(true);
 
     expect(asked.count).toBe(1);
-    expect(presetIn(files, 'shimmer-tape.cleanpreset.json').params.gateRelease).toBe(100);
+    expect(presetIn(files, 'shimmer-tape.b82preset.json').params.gateRelease).toBe(100);
     expect(library.getState()).toMatchObject({ folderName: 'My Presets', remembered: null });
   });
 
@@ -284,11 +298,11 @@ describe('the remembered Library folder', () => {
     await launch();
 
     await library.getState().saveAs('Shimmer Tape');
-    expect(Object.keys(files)).toEqual(['shimmer-tape.cleanpreset.json']);
+    expect(Object.keys(files)).toEqual(['shimmer-tape.b82preset.json']);
 
     remembered = memoryFolder({}, 'prompt', 'granted').folder;
     await launch();
-    await library.getState().importFiles([importFile('a.cleanpreset.json', serializePreset(preset('A')))]);
+    await library.getState().importFiles([importFile('a.b82preset.json', serializePreset(preset('A')))]);
     expect(library.getState().presets.map((p) => p.preset.name)).toEqual(['A']);
   });
 
@@ -317,9 +331,9 @@ describe('the remembered Library folder', () => {
 
   it('gives way to a folder picked while it is still being read', async () => {
     let finishListing!: () => void;
-    const old = memoryFolder({ 'old.cleanpreset.json': serializePreset(preset('Old')) }).folder;
-    remembered = { ...old, list: () => new Promise((resolve) => (finishListing = () => resolve(['old.cleanpreset.json']))) };
-    const picked = memoryFolder({ 'new.cleanpreset.json': serializePreset(preset('New')) }).folder;
+    const old = memoryFolder({ 'old.b82preset.json': serializePreset(preset('Old')) }).folder;
+    remembered = { ...old, list: () => new Promise((resolve) => (finishListing = () => resolve(['old.b82preset.json']))) };
+    const picked = memoryFolder({ 'new.b82preset.json': serializePreset(preset('New')) }).folder;
     library = createLibraryStore(editor, deps(picked));
 
     const launching = library.getState().openRememberedFolder();
@@ -344,8 +358,8 @@ describe('Save As', () => {
 
     await library.getState().saveAs('  Shimmer Tape ');
 
-    expect(Object.keys(files)).toEqual(['shimmer-tape.cleanpreset.json']);
-    expect(presetIn(files, 'shimmer-tape.cleanpreset.json')).toEqual({
+    expect(Object.keys(files)).toEqual(['shimmer-tape.b82preset.json']);
+    expect(presetIn(files, 'shimmer-tape.b82preset.json')).toEqual({
       id: 'new-1',
       name: 'Shimmer Tape',
       notes: '',
@@ -358,16 +372,16 @@ describe('Save As', () => {
   });
 
   it('numbers the file name when another file already has it', async () => {
-    const { folder, files } = memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(preset('Shimmer Tape')) });
+    const { folder, files } = memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(preset('Shimmer Tape')) });
     await setup(folder);
 
     await library.getState().saveAs('Shimmer tape!');
     await library.getState().saveAs('shimmer TAPE');
 
     expect(Object.keys(files).sort()).toEqual([
-      'shimmer-tape-2.cleanpreset.json',
-      'shimmer-tape-3.cleanpreset.json',
-      'shimmer-tape.cleanpreset.json',
+      'shimmer-tape-2.b82preset.json',
+      'shimmer-tape-3.b82preset.json',
+      'shimmer-tape.b82preset.json',
     ]);
   });
 
@@ -400,7 +414,7 @@ describe('the modified marker', () => {
 describe('recalling a Preset', () => {
   it('makes it the Working State and sends it to the pedal', async () => {
     const shimmer = preset('Shimmer Tape', { tone2: 90, effectOrder: 1, motoByp2: 127, channel2Bypass: 0 });
-    const { folder } = memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) });
+    const { folder } = memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
     editor.getState().setParam('vol2', 10);
 
@@ -415,7 +429,7 @@ describe('recalling a Preset', () => {
 
   it('is Possibly Stale until its Send All has finished', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 99 });
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
     markInSync();
 
     const recalled = library.getState().recall(shimmer.id);
@@ -426,7 +440,7 @@ describe('recalling a Preset', () => {
 
   it('leaves the pedal Possibly Stale when the output is unplugged', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 99 });
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
     editor.setState({ outputId: 'gone' });
     markInSync();
 
@@ -454,15 +468,15 @@ describe('New', () => {
 describe('Save', () => {
   it('writes the Working State back to the Preset it came from, keeping its identity', async () => {
     const shimmer = { ...preset('Shimmer Tape'), notes: 'Big wash' };
-    const { folder, files } = memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) });
+    const { folder, files } = memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
     await library.getState().recall(shimmer.id);
     editor.getState().setParam('gateRelease', 100);
 
     expect(await library.getState().save()).toBe(true);
 
-    expect(Object.keys(files)).toEqual(['shimmer-tape.cleanpreset.json']);
-    expect(presetIn(files, 'shimmer-tape.cleanpreset.json')).toEqual({
+    expect(Object.keys(files)).toEqual(['shimmer-tape.b82preset.json']);
+    expect(presetIn(files, 'shimmer-tape.b82preset.json')).toEqual({
       ...shimmer,
       modifiedAt: '2026-10-05T00:00:00.000Z',
       params: { ...shimmer.params, gateRelease: 100 },
@@ -485,57 +499,57 @@ describe('Save', () => {
 describe('Rename', () => {
   it('renames the Preset and its file, keeping its id', async () => {
     const shimmer = preset('Shimmer Tape');
-    const { folder, files } = memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) });
+    const { folder, files } = memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
     await library.getState().recall(shimmer.id);
 
     await library.getState().rename(shimmer.id, 'Glass Choir');
 
-    expect(Object.keys(files)).toEqual(['glass-choir.cleanpreset.json']);
-    expect(presetIn(files, 'glass-choir.cleanpreset.json')).toEqual({
+    expect(Object.keys(files)).toEqual(['glass-choir.b82preset.json']);
+    expect(presetIn(files, 'glass-choir.b82preset.json')).toEqual({
       ...shimmer,
       name: 'Glass Choir',
       modifiedAt: '2026-10-05T00:00:00.000Z',
     });
     expect(library.getState().presets.map((p) => [p.preset.name, p.fileName])).toEqual([
-      ['Glass Choir', 'glass-choir.cleanpreset.json'],
+      ['Glass Choir', 'glass-choir.b82preset.json'],
     ]);
     expect(workingLabel()).toBe('Glass Choir');
   });
 
   it('keeps the file name when the name still slugs the same', async () => {
     const shimmer = preset('Shimmer Tape');
-    const { folder, files } = memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) });
+    const { folder, files } = memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
 
     await library.getState().rename(shimmer.id, 'Shimmer tape');
 
-    expect(Object.keys(files)).toEqual(['shimmer-tape.cleanpreset.json']);
-    expect(presetIn(files, 'shimmer-tape.cleanpreset.json').name).toBe('Shimmer tape');
+    expect(Object.keys(files)).toEqual(['shimmer-tape.b82preset.json']);
+    expect(presetIn(files, 'shimmer-tape.b82preset.json').name).toBe('Shimmer tape');
   });
 
   it('keeps a file whose name differs only in case, as on a case-insensitive disk it is the same file', async () => {
     const shimmer = preset('Shimmer Tape');
-    const { folder, files } = memoryFolder({ 'Shimmer-Tape.cleanpreset.json': serializePreset(shimmer) });
+    const { folder, files } = memoryFolder({ 'Shimmer-Tape.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
 
     await library.getState().rename(shimmer.id, 'Shimmer tape');
 
-    expect(Object.keys(files)).toEqual(['Shimmer-Tape.cleanpreset.json']);
-    expect(presetIn(files, 'Shimmer-Tape.cleanpreset.json').name).toBe('Shimmer tape');
+    expect(Object.keys(files)).toEqual(['Shimmer-Tape.b82preset.json']);
+    expect(presetIn(files, 'Shimmer-Tape.b82preset.json').name).toBe('Shimmer tape');
   });
 });
 
 describe('Duplicate', () => {
   it('writes a copy as a new Preset and leaves the Working State alone', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    const { folder, files } = memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) });
+    const { folder, files } = memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
     await library.getState().recall(shimmer.id);
 
     await library.getState().duplicate(shimmer.id);
 
-    expect(presetIn(files, 'shimmer-tape-copy.cleanpreset.json')).toEqual({
+    expect(presetIn(files, 'shimmer-tape-copy.b82preset.json')).toEqual({
       ...shimmer,
       id: 'new-1',
       name: 'Shimmer Tape copy',
@@ -550,7 +564,7 @@ describe('Duplicate', () => {
 describe('Delete', () => {
   it('removes the Preset file; a Working State recalled from it keeps going without a Preset', async () => {
     const shimmer = preset('Shimmer Tape');
-    const { folder, files } = memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) });
+    const { folder, files } = memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
     await library.getState().recall(shimmer.id);
 
@@ -567,7 +581,7 @@ describe('Delete', () => {
 describe('Slots', () => {
   it('stores the Working State linked to the Preset it came from', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
     await library.getState().recall(shimmer.id);
 
     expect(await library.getState().storeSlot(9)).toBe(true);
@@ -590,7 +604,7 @@ describe('Slots', () => {
 
   it('recalling a known Slot makes the Working State belong to its Preset, unmodified', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
     await library.getState().recall(shimmer.id);
     await library.getState().storeSlot(9);
     await library.getState().newWorkingState();
@@ -604,7 +618,7 @@ describe('Slots', () => {
 
   it('recalling a Slot whose Preset has changed since shows the Working State as modified from it', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
     await library.getState().recall(shimmer.id);
     await library.getState().storeSlot(9);
     editor.getState().setParam('vol2', 99);
@@ -619,7 +633,7 @@ describe('Slots', () => {
 
   it('recalling an unknown Slot leaves the Working State and its Preset alone', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
     await library.getState().recall(shimmer.id);
     const source = library.getState().source;
 
@@ -631,7 +645,7 @@ describe('Slots', () => {
 
   it('a stored Slot outlives its Preset, keeping the name it was stored with', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
     await library.getState().recall(shimmer.id);
     await library.getState().storeSlot(9);
     await library.getState().deletePreset(shimmer.id);
@@ -646,7 +660,7 @@ describe('Slots', () => {
 
   it('re-stores a Slot whose Preset changed since: the Preset becomes the Working State and the snapshot', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
     await library.getState().recall(shimmer.id);
     await library.getState().storeSlot(9);
     editor.getState().setParam('vol2', 99);
@@ -663,7 +677,7 @@ describe('Slots', () => {
 
   it('can’t re-store a Slot whose Preset is gone', async () => {
     const shimmer = preset('Shimmer Tape');
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
     await library.getState().recall(shimmer.id);
     await library.getState().storeSlot(9);
     await library.getState().deletePreset(shimmer.id);
@@ -674,7 +688,7 @@ describe('Slots', () => {
 
 describe('the browser storage Library', () => {
   it('keeps Presets like a folder, under its own name', async () => {
-    const { folder, files } = memoryFolder({ 'zed.cleanpreset.json': serializePreset(preset('Zed')) });
+    const { folder, files } = memoryFolder({ 'zed.b82preset.json': serializePreset(preset('Zed')) });
     library = createLibraryStore(editor, deps(null, folder));
 
     await library.getState().openBrowserStorage();
@@ -682,7 +696,7 @@ describe('the browser storage Library', () => {
 
     expect(library.getState()).toMatchObject({ storage: 'browser', folderName: 'Browser storage' });
     expect(library.getState().presets.map((p) => p.preset.name)).toEqual(['Shimmer Tape', 'Zed']);
-    expect(Object.keys(files)).toContain('shimmer-tape.cleanpreset.json');
+    expect(Object.keys(files)).toContain('shimmer-tape.b82preset.json');
   });
 
   it('a folder Library is a folder', async () => {
@@ -694,25 +708,25 @@ describe('the browser storage Library', () => {
 describe('Export', () => {
   it('hands a Preset to the browser to save as its own Preset file', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    await setup(memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 's.b82preset.json': serializePreset(shimmer) }).folder);
 
     library.getState().exportPreset(shimmer.id);
 
-    expect(downloads).toEqual([{ fileName: 'shimmer-tape.cleanpreset.json', text: serializePreset(shimmer) }]);
+    expect(downloads).toEqual([{ fileName: 'shimmer-tape.b82preset.json', text: serializePreset(shimmer) }]);
   });
 
   it('hands every Preset to the browser as one Bundle named after the Library, and counts as a backup', async () => {
     const a = preset('A');
     const b = preset('B');
     await setup(
-      memoryFolder({ 'b.cleanpreset.json': serializePreset(b), 'a.cleanpreset.json': serializePreset(a) }).folder,
+      memoryFolder({ 'b.b82preset.json': serializePreset(b), 'a.b82preset.json': serializePreset(a) }).folder,
     );
 
     library.getState().exportBundle();
 
     expect(downloads).toEqual([
       {
-        fileName: 'my-presets-2026-10-05.cleanbundle.json',
+        fileName: 'my-presets-2026-10-05.b82bundle.json',
         text: serializeBundle('My Presets', [a, b], '2026-10-05T00:00:00.000Z'),
       },
     ]);
@@ -732,8 +746,8 @@ describe('Import', () => {
     delete bundle.presets[1].params.vol2;
 
     await library.getState().importFiles([
-      importFile('c.cleanpreset.json', serializePreset(preset('C'))),
-      importFile('shared.cleanbundle.json', JSON.stringify(bundle)),
+      importFile('c.b82preset.json', serializePreset(preset('C'))),
+      importFile('shared.b82bundle.json', JSON.stringify(bundle)),
       importFile('notes.json', '{}'),
     ]);
 
@@ -742,27 +756,27 @@ describe('Import', () => {
       ['B', 'id-B'],
       ['C', 'id-C'],
     ]);
-    expect(presetIn(files, 'a.cleanpreset.json')).toEqual(preset('A'));
+    expect(presetIn(files, 'a.b82preset.json')).toEqual(preset('A'));
     expect(library.getState().importReport).toEqual({
       added: 3,
       replaced: 0,
       keptBoth: 0,
       skipped: 0,
-      problems: ['shared.cleanbundle.json: B: vol2 missing: set to 64', 'notes.json: Not a Preset or Bundle file'],
+      problems: ['shared.b82bundle.json: B: vol2 missing: set to 64', 'notes.json: Not a Preset or Bundle file'],
     });
     expect(library.getState().conflicts).toEqual([]);
   });
 
   it('skips a Preset identical to one already in the Library, whatever its dates', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    const { folder, files } = memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) });
+    const { folder, files } = memoryFolder({ 's.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
 
     await library
       .getState()
-      .importFiles([importFile('s.cleanpreset.json', serializePreset({ ...shimmer, modifiedAt: '2026-10-06T00:00:00.000Z' }))]);
+      .importFiles([importFile('s.b82preset.json', serializePreset({ ...shimmer, modifiedAt: '2026-10-06T00:00:00.000Z' }))]);
 
-    expect(Object.keys(files)).toEqual(['s.cleanpreset.json']);
+    expect(Object.keys(files)).toEqual(['s.b82preset.json']);
     expect(library.getState().importReport).toMatchObject({ added: 0, skipped: 1 });
     expect(library.getState().conflicts).toEqual([]);
   });
@@ -772,37 +786,37 @@ describe('Import', () => {
 
     await library
       .getState()
-      .importFiles([importFile('x.cleanbundle.json', serializeBundle('X', [preset('A', {}, 'same'), preset('B', {}, 'same')], ''))]);
+      .importFiles([importFile('x.b82bundle.json', serializeBundle('X', [preset('A', {}, 'same'), preset('B', {}, 'same')], ''))]);
 
     expect(library.getState().presets.map((p) => p.preset.name)).toEqual(['A']);
-    expect(library.getState().importReport?.problems).toEqual(['x.cleanbundle.json: B: same id as A, skipped']);
+    expect(library.getState().importReport?.problems).toEqual(['x.b82bundle.json: B: same id as A, skipped']);
   });
 
   it('asks about a different Preset with an id already in the Library, writing nothing until answered', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    const { folder, files } = memoryFolder({ 's.cleanpreset.json': serializePreset(shimmer) });
+    const { folder, files } = memoryFolder({ 's.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
     const incoming = { ...shimmer, name: 'Glass Choir', params: { ...shimmer.params, vol2: 99 } };
 
-    await library.getState().importFiles([importFile('g.cleanpreset.json', serializePreset(incoming))]);
+    await library.getState().importFiles([importFile('g.b82preset.json', serializePreset(incoming))]);
 
     expect(library.getState().conflicts).toEqual([{ incoming, existing: shimmer }]);
-    expect(Object.keys(files)).toEqual(['s.cleanpreset.json']);
+    expect(Object.keys(files)).toEqual(['s.b82preset.json']);
   });
 
   it('Replace writes over the Preset, keeping its id so Slot Map links survive', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    const { folder, files } = memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) });
+    const { folder, files } = memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(shimmer) });
     await setup(folder);
     await library.getState().recall(shimmer.id);
     await library.getState().storeSlot(9);
     const incoming = { ...shimmer, name: 'Glass Choir', params: { ...shimmer.params, vol2: 99 } };
-    await library.getState().importFiles([importFile('g.cleanpreset.json', serializePreset(incoming))]);
+    await library.getState().importFiles([importFile('g.b82preset.json', serializePreset(incoming))]);
 
     await library.getState().resolveConflicts('replace', false);
 
-    expect(Object.keys(files)).toEqual(['glass-choir.cleanpreset.json']);
-    expect(presetIn(files, 'glass-choir.cleanpreset.json')).toEqual(incoming);
+    expect(Object.keys(files)).toEqual(['glass-choir.b82preset.json']);
+    expect(presetIn(files, 'glass-choir.b82preset.json')).toEqual(incoming);
     expect(library.getState().importReport).toMatchObject({ added: 0, replaced: 1 });
     expect(library.getState().conflicts).toEqual([]);
     // The Working State came from the old version: it now shows as modified from the new one.
@@ -812,9 +826,9 @@ describe('Import', () => {
 
   it('adds a Preset deleted while the question waited, whatever the answer', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    await setup(memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(shimmer) }).folder);
     const incoming = { ...shimmer, params: { ...shimmer.params, vol2: 99 } };
-    await library.getState().importFiles([importFile('s.cleanpreset.json', serializePreset(incoming))]);
+    await library.getState().importFiles([importFile('s.b82preset.json', serializePreset(incoming))]);
     await library.getState().deletePreset(shimmer.id);
 
     await library.getState().resolveConflicts('replace', false);
@@ -825,15 +839,15 @@ describe('Import', () => {
 
   it('Keep Both adds the incoming Preset with a new id', async () => {
     const shimmer = preset('Shimmer Tape', { vol2: 20 });
-    await setup(memoryFolder({ 'shimmer-tape.cleanpreset.json': serializePreset(shimmer) }).folder);
+    await setup(memoryFolder({ 'shimmer-tape.b82preset.json': serializePreset(shimmer) }).folder);
     const incoming = { ...shimmer, params: { ...shimmer.params, vol2: 99 } };
-    await library.getState().importFiles([importFile('s.cleanpreset.json', serializePreset(incoming))]);
+    await library.getState().importFiles([importFile('s.b82preset.json', serializePreset(incoming))]);
 
     await library.getState().resolveConflicts('keepBoth', false);
 
     expect(library.getState().presets.map((p) => [p.preset.id, p.preset.params.vol2, p.fileName])).toEqual([
-      [shimmer.id, 20, 'shimmer-tape.cleanpreset.json'],
-      ['new-1', 99, 'shimmer-tape-2.cleanpreset.json'],
+      [shimmer.id, 20, 'shimmer-tape.b82preset.json'],
+      ['new-1', 99, 'shimmer-tape-2.b82preset.json'],
     ]);
     expect(library.getState().importReport).toMatchObject({ keptBoth: 1 });
   });
@@ -841,10 +855,10 @@ describe('Import', () => {
   it('answers one conflict at a time, or all that are left at once', async () => {
     const [a, b, c] = ['A', 'B', 'C'].map((name) => preset(name, { vol2: 20 }));
     await setup(
-      memoryFolder(Object.fromEntries([a, b, c].map((p) => [`${p!.name}.cleanpreset.json`, serializePreset(p!)]))).folder,
+      memoryFolder(Object.fromEntries([a, b, c].map((p) => [`${p!.name}.b82preset.json`, serializePreset(p!)]))).folder,
     );
     const changed = [a, b, c].map((p) => ({ ...p!, params: { ...p!.params, vol2: 99 } }));
-    await library.getState().importFiles([importFile('x.cleanbundle.json', serializeBundle('X', changed, ''))]);
+    await library.getState().importFiles([importFile('x.b82bundle.json', serializeBundle('X', changed, ''))]);
     expect(library.getState().conflicts.map((x) => x.incoming.name)).toEqual(['A', 'B', 'C']);
 
     await library.getState().resolveConflicts('keepBoth', false);
@@ -867,7 +881,7 @@ describe('Import', () => {
     library.getState().exportBundle();
 
     await setup(memoryFolder().folder);
-    await library.getState().importFiles([importFile('b.cleanbundle.json', downloads[0]!.text)]);
+    await library.getState().importFiles([importFile('b.b82bundle.json', downloads[0]!.text)]);
 
     expect(library.getState().presets.map((p) => p.preset)).toEqual(presets);
     const parsed = parseLibraryFile(downloads[0]!.text);

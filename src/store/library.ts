@@ -213,12 +213,12 @@ const slugOf = (name: string, fallback: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '') || fallback;
 
-/** `shimmer-tape.cleanpreset.json` for "Shimmer Tape", then `-2`, `-3`… if a file already has that name. */
+/** `shimmer-tape.b82preset.json` for "Shimmer Tape", then `-2`, `-3`… if a file already has that name. */
 function presetFileName(name: string, taken: string[]): string {
   const slug = slugOf(name, 'preset');
   const used = new Set(taken.map((t) => t.toLowerCase()));
   for (let n = 1; ; n++) {
-    const fileName = `${slug}${n > 1 ? `-${n}` : ''}.cleanpreset.json`;
+    const fileName = `${slug}${n > 1 ? `-${n}` : ''}.b82preset.json`;
     if (!used.has(fileName)) return fileName;
   }
 }
@@ -426,7 +426,7 @@ export function createLibraryStore(editor: EditorStoreApi, deps: LibraryDeps) {
         const name = get().folderName ?? 'Library';
         const at = recordBackupCheck();
         const presets = get().presets.map((p) => p.preset);
-        deps.download(`${slugOf(name, 'library')}-${at.slice(0, 10)}.cleanbundle.json`, serializeBundle(name, presets, at));
+        deps.download(`${slugOf(name, 'library')}-${at.slice(0, 10)}.b82bundle.json`, serializeBundle(name, presets, at));
       },
       snoozeBackup() {
         recordBackupCheck();

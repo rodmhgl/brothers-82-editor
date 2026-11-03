@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { MAX_NAME_LENGTH } from '../../model/schema';
-import { customizeSummary } from '../../model/summary';
+import { toggleSummary } from '../../model/summary';
 import {
   MODIFIED_HELP,
   backupDue,
@@ -269,7 +269,6 @@ function PresetRow(props: {
 }) {
   const { preset, fileName } = props.entry;
   const { browser } = props;
-  const summary = customizeSummary(preset.params);
   const { armed, click: clickDelete } = useArmedConfirm(props.onDelete);
 
   if (props.renaming) {
@@ -297,11 +296,9 @@ function PresetRow(props: {
         >
           {preset.name}
         </button>
-        {summary && (
-          <div className="preset-summary" aria-label="Customize dips">
-            {summary}
-          </div>
-        )}
+        <div className="preset-summary" aria-label="Toggles">
+          {toggleSummary(preset.params)}
+        </div>
         {preset.notes && <div className="preset-notes">{preset.notes}</div>}
         <div className="preset-dates">
           Created {formatDate(preset.createdAt)} · Modified {formatDate(preset.modifiedAt)}

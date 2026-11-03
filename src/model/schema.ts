@@ -3,21 +3,30 @@ import type { WorkingState } from './state';
 
 // The Preset file format (ADR 0002, SPEC.md §5.6): a small envelope and a flat map of raw preset-scoped params.
 
-export const PRESET_FORMAT = 'clean-preset';
+export const PRESET_FORMAT = 'brothers-82-preset';
 
 /** A Bundle: full copies of several Presets in one file, for sharing or backup. */
-export const BUNDLE_FORMAT = 'clean-bundle';
+export const BUNDLE_FORMAT = 'brothers-82-bundle';
 
-/** Another pedal's file is refused, never loaded best-effort: it would come out an all-defaults Preset (ADR 0002). */
-const OTHER_PEDALS: Record<string, string> = {
-  'lost-found-preset': 'This is a Lost+Found Preset, open it in the Lost+Found editor',
-  'lost-found-bundle': 'This is a Lost+Found Bundle, open it in the Lost+Found editor',
-};
+/**
+ * Another pedal's file is refused, never loaded best-effort: it would come out an all-defaults Preset (ADR 0002).
+ * Each `format` prefix names the editor it belongs to.
+ */
+const OTHER_PEDALS: [prefix: string, editor: string][] = [
+  ['clean-', 'Clean'],
+  ['lost-found-', 'Lost+Found'],
+];
 
 /** Why a file object belongs to another pedal, or null if it doesn't seem to. */
 function otherPedalError(file: unknown): string | null {
-  if (!isObject(file) || typeof file.format !== 'string' || !Object.hasOwn(OTHER_PEDALS, file.format)) return null;
-  return OTHER_PEDALS[file.format]!;
+  if (!isObject(file) || typeof file.format !== 'string') return null;
+  const format = file.format;
+  const pedal = OTHER_PEDALS.find(([prefix]) => format.startsWith(prefix));
+  if (!pedal) return null;
+  const [prefix, editor] = pedal;
+  const rest = format.slice(prefix.length);
+  const kind = rest === 'preset' ? 'Preset' : rest === 'bundle' ? 'Bundle' : 'file';
+  return `This is a ${editor} ${kind}, open it in the ${editor} editor`;
 }
 
 /** Bump with a migration whenever a preset param is added, a param ID is renamed or what a value means changes (ADR 0002). */
