@@ -16,12 +16,12 @@ describe('routeIncoming', () => {
     ['a PC', [0xc0, 9]],
     ['a note', [0x9f, 60, 100]],
   ])('ignores %s on another MIDI channel', (_, bytes) => {
-    expect(routeIncoming(bytes, 2)).toBe('learn');
+    expect(routeIncoming(bytes, 2)).toBe('otherMidiChannel');
   });
 
   it('follows the pedal’s MIDI channel', () => {
     expect(routeIncoming([0xb4, 15, 3], 5)).toBe('passThrough');
-    expect(routeIncoming([0xb1, 15, 3], 5)).toBe('learn');
+    expect(routeIncoming([0xb1, 15, 3], 5)).toBe('otherMidiChannel');
   });
 
   it.each([
