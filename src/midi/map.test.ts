@@ -17,8 +17,8 @@ const SPEC: Row[] = [
   ['effectOrder', 22, 'toggle', 'preset', 2],
   ['odType', 23, 'toggle', 'preset', 2],
   // §4.3 Hidden Options
-  ['gateRelease', 27, 'hidden', 'preset', 64],
-  ['gateThreshold', 29, 'hidden', 'preset', 64],
+  ['gateThreshold', 27, 'hidden', 'preset', 64],
+  ['gateRelease', 29, 'hidden', 'preset', 64],
   // §4.4 Footswitches
   ['channel1Bypass', 102, 'footswitch', 'preset', 0],
   ['channel2Bypass', 103, 'footswitch', 'preset', 127],

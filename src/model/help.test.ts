@@ -102,6 +102,16 @@ describe('describeControl reads the context a control is in', () => {
     }
   });
 
+  it('says which way Gate Threshold and Gate Release run', () => {
+    const state = withWorking({ noiseGate: 127 });
+    expect(describeControl('gateThreshold', state)).toMatchObject({ cc: 27 });
+    expect(describeControl('gateThreshold', state).description).toContain('A higher value makes the Noise Gate harder to open.');
+    expect(describeControl('gateRelease', state)).toMatchObject({ cc: 29 });
+    expect(describeControl('gateRelease', state).description).toContain(
+      'A higher value gives a slower, more gradual release; a lower value gives a faster one.',
+    );
+  });
+
   it('notes on Expression that it needs at least one target dip', () => {
     const state = withWorking({});
     const none = describeControl('expression', state);

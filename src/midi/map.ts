@@ -104,9 +104,9 @@ export const PARAMS = {
   ampType: toggle3('ampType', 'Amp Type', 21, ['800', 'Plexi', 'Solo'], 'The voicing of Channel 2: 800, Plexi or Solo.'),
   effectOrder: toggle3('effectOrder', 'Effect Order', 22, ['2>1', '2+1', '2<1'], 'How the Channels combine: Channel 2 feeds Channel 1 (2>1), in parallel (2+1), or Channel 1 feeds Channel 2 (2<1).'),
   odType: toggle3('odType', 'OD Type', 23, ['808', 'Super', 'RJM'], 'The voicing of Channel 1: 808, Super or RJM.'),
-  // Hidden Options (SPEC.md §4.3). 64 is a placeholder until hardware check #3.
-  gateRelease: level('gateRelease', 'Gate Release', 27, 'hidden', 64, 'How quickly the Noise Gate re-engages (with the Noise Gate dip on).'),
-  gateThreshold: level('gateThreshold', 'Gate Threshold', 29, 'hidden', 64, 'The level below which the Noise Gate mutes the signal (with the Noise Gate dip on).'),
+  // Hidden Options (SPEC.md §4.3). The pedal's defaults are unknown (hardware check #3), so 64 is a placeholder.
+  gateThreshold: level('gateThreshold', 'Gate Threshold', 27, 'hidden', 64, 'The level below which the Noise Gate mutes the signal (with the Noise Gate dip on). A higher value makes the Noise Gate harder to open.'),
+  gateRelease: level('gateRelease', 'Gate Release', 29, 'hidden', 64, 'How quickly the Noise Gate re-engages (with the Noise Gate dip on). A higher value gives a slower, more gradual release; a lower value gives a faster one.'),
   // Footswitches (SPEC.md §4.4): both states are stored in a Preset.
   channel1Bypass: onOff('channel1Bypass', 'Channel 1 Bypass', 102, 'footswitch', 0, 'Engages or bypasses Channel 1, like tapping the right footswitch.', BYPASS_VALUES),
   channel2Bypass: onOff('channel2Bypass', 'Channel 2 Bypass', 103, 'footswitch', 127, 'Engages or bypasses Channel 2, like tapping the left footswitch.', BYPASS_VALUES),

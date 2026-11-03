@@ -45,12 +45,12 @@ Settings with no control on the pedal's face: Gate Threshold and Gate Release.
 _Avoid_: Alt menu
 
 **Gate Threshold**:
-The Hidden Option setting the level below which the Noise Gate mutes the signal. Only has an effect while the Noise Gate dip is on.
-_Avoid_: Presence 1 (the Brothers AM name for the same CC)
+The Hidden Option setting the level below which the Noise Gate mutes the signal. A higher value makes the Noise Gate harder to open. Only has an effect while the Noise Gate dip is on.
+_Avoid_: Presence 2 (the Brothers AM name for the same CC)
 
 **Gate Release**:
-The Hidden Option setting how quickly the Noise Gate re-engages. Only has an effect while the Noise Gate dip is on.
-_Avoid_: Presence 2 (the Brothers AM name for the same CC)
+The Hidden Option setting how quickly the Noise Gate re-engages. A higher value gives a slower, more gradual release; a lower value gives a faster one. Only has an effect while the Noise Gate dip is on.
+_Avoid_: Presence 1 (the Brothers AM name for the same CC)
 
 **Channel Bypass**:
 Whether a Channel is engaged, set by that Channel's footswitch.

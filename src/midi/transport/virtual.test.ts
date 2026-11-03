@@ -180,18 +180,18 @@ describe('Virtual Pedal: log notes (SPEC.md §5.3)', () => {
   });
 
   it('notes that Gate Threshold and Gate Release have no effect while Noise Gate is off', () => {
-    expect(logAfter([29, 10], [27, 20])).toEqual([
-      'CC 29 = 10 → Gate Threshold · Gate Threshold/Gate Release have no effect while Noise Gate is off',
-      'CC 27 = 20 → Gate Release · Gate Threshold/Gate Release have no effect while Noise Gate is off',
+    expect(logAfter([27, 10], [29, 20])).toEqual([
+      'CC 27 = 10 → Gate Threshold · Gate Threshold/Gate Release have no effect while Noise Gate is off',
+      'CC 29 = 20 → Gate Release · Gate Threshold/Gate Release have no effect while Noise Gate is off',
     ]);
   });
 
   it('adds no gate note once Noise Gate is on, or to a CC that changes nothing', () => {
-    expect(logAfter([29, 64], [71, 127], [29, 10], [27, 20])).toEqual([
-      'CC 29 = 64 → Gate Threshold',
+    expect(logAfter([27, 64], [71, 127], [27, 10], [29, 20])).toEqual([
+      'CC 27 = 64 → Gate Threshold',
       'CC 71 = 127 → Noise Gate → On',
-      'CC 29 = 10 → Gate Threshold',
-      'CC 27 = 20 → Gate Release',
+      'CC 27 = 10 → Gate Threshold',
+      'CC 29 = 20 → Gate Release',
     ]);
   });
 

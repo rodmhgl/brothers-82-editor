@@ -33,7 +33,7 @@ test('the editor works from the keyboard alone', async ({ page }) => {
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowUp');
   await expect(gateRelease).toHaveAttribute('aria-valuenow', '66');
-  await expect(lastSent).toHaveText(/^CC 27 = 66 → Gate Release/);
+  await expect(lastSent).toHaveText(/^CC 29 = 66 → Gate Release/);
 
   await page.keyboard.press('Control+Z');
   await expect(gateRelease).toHaveAttribute('aria-valuenow', '65');

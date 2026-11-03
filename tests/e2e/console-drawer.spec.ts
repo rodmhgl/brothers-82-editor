@@ -47,7 +47,7 @@ test('the Parameters table edits values and Expression / CV target dips', async 
   const log = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log');
 
   await drawer.getByRole('slider', { name: 'Gate Release' }).press('PageUp');
-  await expect(log.getByRole('listitem').last()).toHaveText(/^CC 27 = 74 → Gate Release/);
+  await expect(log.getByRole('listitem').last()).toHaveText(/^CC 29 = 74 → Gate Release/);
   await expect(page.getByRole('group', { name: 'Hidden Options' }).getByRole('slider', { name: 'Gate Release' })).toHaveAttribute(
     'aria-valuenow',
     '74',
