@@ -87,8 +87,8 @@ describe('setParam', () => {
     ['ampType', 21, 3],
     ['effectOrder', 22, 1],
     ['odType', 23, 2],
-    ['gateRelease', 27, 10],
-    ['gateThreshold', 29, 127],
+    ['gateThreshold', 27, 127],
+    ['gateRelease', 29, 10],
     ['clean1', 72, 127],
     ['noiseGate', 71, 127],
     ['channel1Bypass', 102, 127],
@@ -163,7 +163,7 @@ describe('undo/redo', () => {
     const undone = run(edited, { type: 'undo' }, { type: 'undo' });
     expect(undone.state.working).toMatchObject({ vol2: 64, gateRelease: 64 });
     expect(undone.messages).toEqual([
-      [0xb1, 27, 64],
+      [0xb1, 29, 64],
       [0xb1, 15, 64],
     ]);
 
@@ -356,7 +356,7 @@ describe('receive (Pass-through)', () => {
   const SPEC_CCS: [cc: number, id: ParamId, held: number][] = [
     [14, 'gain2', 3], [15, 'vol2', 3], [16, 'gain1', 3], [17, 'tone2', 3], [18, 'vol1', 3], [19, 'tone1', 3],
     [21, 'ampType', 3], [22, 'effectOrder', 3], [23, 'odType', 3],
-    [27, 'gateRelease', 3], [29, 'gateThreshold', 3],
+    [27, 'gateThreshold', 3], [29, 'gateRelease', 3],
     [102, 'channel1Bypass', 127], [103, 'channel2Bypass', 127],
     [61, 'volume1Target', 127], [62, 'volume2Target', 127], [63, 'gain1Target', 127], [64, 'gain2Target', 127],
     [65, 'tone1Target', 127], [66, 'tone2Target', 127], [67, 'sweep', 127], [68, 'polarity', 127],
@@ -485,8 +485,8 @@ describe('connection and Send All', () => {
       [0xb1, 21, 2], // Amp Type: Plexi
       [0xb1, 22, 1], // Effect Order: 2>1
       [0xb1, 23, 2], // OD Type: Super
-      [0xb1, 27, 90], // Gate Release
-      [0xb1, 29, 64], // Gate Threshold
+      [0xb1, 27, 64], // Gate Threshold
+      [0xb1, 29, 90], // Gate Release
       [0xb1, 14, 64], // Gain 2
       [0xb1, 15, 100], // Vol 2
       [0xb1, 16, 64], // Gain 1

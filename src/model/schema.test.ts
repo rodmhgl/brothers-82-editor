@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { encodeSendAll, initialEditorState } from './core';
 import { defaultWorkingState } from './state';
 import { parseLibraryFile, parsePreset, serializeBundle, serializePreset, type Preset } from './schema';
 
@@ -256,5 +257,37 @@ describe('Bundles', () => {
     ],
   ])('rejects %s', (_, text, error) => {
     expect(parseLibraryFile(text)).toEqual({ ok: false, error });
+  });
+});
+
+describe('files written before the Gate Threshold and Gate Release CCs were swapped (hardware check #3)', () => {
+  // Params are stored by id, not by CC, so these files keep their values and Send All puts them on the new CCs.
+  const withOldGateValues = (file: Record<string, unknown>) => {
+    file.params = { ...(file.params as Record<string, unknown>), gateRelease: 10, gateThreshold: 120 };
+    return file;
+  };
+  const sentFor = (params: Preset['params']) =>
+    encodeSendAll({ ...initialEditorState(), working: params }).filter(([, cc]) => cc === 27 || cc === 29);
+
+  it('load a Preset with the same Gate Threshold and Gate Release, sent on CC 27 and CC 29', () => {
+    const result = parsePreset(JSON.stringify(withOldGateValues(JSON.parse(serializePreset(shimmer)))));
+    if (!result.ok) throw new Error(result.error);
+
+    expect(result.warnings).toEqual([]);
+    expect(result.preset.params).toMatchObject({ gateThreshold: 120, gateRelease: 10 });
+    expect(sentFor(result.preset.params)).toEqual([
+      [0xb1, 27, 120],
+      [0xb1, 29, 10],
+    ]);
+  });
+
+  it('load every Preset in a Bundle with the same Gate Threshold and Gate Release', () => {
+    const file = JSON.parse(serializeBundle('My Presets', [shimmer], '2026-10-07T09:00:00.000Z'));
+    file.presets = file.presets.map(withOldGateValues);
+    const result = parseLibraryFile(JSON.stringify(file));
+    if (!result.ok) throw new Error(result.error);
+
+    expect(result.problems).toEqual([]);
+    expect(result.presets[0]!.params).toMatchObject({ gateThreshold: 120, gateRelease: 10 });
   });
 });

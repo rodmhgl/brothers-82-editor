@@ -52,7 +52,7 @@ test('every kind of control follows a passed-through CC, on screen and on the Vi
     'true',
   );
 
-  await play(page, [0xb1, 29, 20]);
+  await play(page, [0xb1, 27, 20]);
   await expect(page.getByRole('group', { name: 'Hidden Options' }).getByRole('slider', { name: 'Gate Threshold' })).toHaveAttribute(
     'aria-valuenow',
     '20',

@@ -149,8 +149,8 @@ Input only, over ¼" TRS. Default MIDI channel **2** (1–16, set in Global Sett
 
 | Param | CC | Value | Default |
 | --- | --- | --- | --- |
-| Gate Release | 27 | 0–127 | 64 (placeholder until hardware check #3) |
-| Gate Threshold | 29 | 0–127 | 64 (placeholder until hardware check #3) |
+| Gate Threshold | 27 | 0–127 | 64 (placeholder: the pedal's default is unknown, hardware check #3) |
+| Gate Release | 29 | 0–127 | 64 (placeholder: the pedal's default is unknown, hardware check #3) |
 
 The Brothers AM manual lists these CCs as Presence 2 and Presence 1. Use the CONTEXT.md names.
 

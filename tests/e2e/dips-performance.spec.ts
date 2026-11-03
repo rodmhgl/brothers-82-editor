@@ -82,13 +82,13 @@ test('Gate Threshold and Gate Release sit beside the Noise Gate dip and stay edi
   await expect(noiseGate).toHaveAttribute('aria-checked', 'false');
   const note = 'Gate Threshold/Gate Release have no effect while Noise Gate is off';
   await hiddenOptions.getByRole('slider', { name: 'Gate Threshold' }).press('ArrowUp');
-  await expect(last).toHaveText(`CC 29 = 65 → Gate Threshold · ${note}`);
+  await expect(last).toHaveText(`CC 27 = 65 → Gate Threshold · ${note}`);
   await hiddenOptions.getByRole('slider', { name: 'Gate Release' }).press('ArrowUp');
-  await expect(last).toHaveText(`CC 27 = 65 → Gate Release · ${note}`);
+  await expect(last).toHaveText(`CC 29 = 65 → Gate Release · ${note}`);
 
   await noiseGate.click();
   await hiddenOptions.getByRole('slider', { name: 'Gate Release' }).press('ArrowUp');
-  await expect(last).toHaveText('CC 27 = 66 → Gate Release');
+  await expect(last).toHaveText('CC 29 = 66 → Gate Release');
 });
 
 test('Master and Clean 1 log what they do to the Channels', async ({ page }) => {
