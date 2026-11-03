@@ -37,6 +37,10 @@ test('reload restores every control, the Slot Map, MIDI channel and layout, Poss
   // Edit, then store in Slot 7: Send All makes it In Sync.
   await ampType.getByRole('radio', { name: '800' }).check();
   await vol1.press('PageUp');
+  // Before the Data drawer opens over the footswitches.
+  await gateThreshold.press('ArrowUp');
+  await channel1.click();
+  await channel2.click();
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('tab', { name: 'Slots' }).click();
   await drawer.getByRole('button', { name: 'Slot 7 · MIDI only' }).click();
@@ -45,9 +49,6 @@ test('reload restores every control, the Slot Map, MIDI channel and layout, Poss
   await expect(rail.getByRole('button', { name: 'Recall Slot 7 · MIDI only · Untitled' })).toBeVisible();
   await expect(syncStatus).toHaveText('In Sync');
   await vol1.press('PageUp');
-  await gateThreshold.press('ArrowUp');
-  await channel1.click();
-  await channel2.click();
   await connection.getByLabel('MIDI channel').selectOption('5');
   await expect.poll(async () => (await savedSession(page))?.midiChannel).toBe(5);
 
