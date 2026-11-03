@@ -32,6 +32,54 @@ test('a simulated MIDI input automates the pedal on its MIDI channel, with the s
   await expect(page.getByLabel('Sync Status')).toHaveText('Unknown');
 });
 
+test('every kind of control follows a passed-through CC, on screen and on the Virtual Pedal', async ({ page }) => {
+  await withSimulatedInput(page);
+  await page.goto('/');
+  const log = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log');
+  const pedal = page.getByRole('region', { name: 'Pedal' });
+  await page.getByLabel('MIDI input').selectOption({ label: 'Test DAW' });
+
+  await play(page, [0xb1, 23, 3]);
+  await expect(log.getByRole('listitem').last()).toHaveText('CC 23 = 3 → OD Type → RJM');
+  await expect(pedal.getByRole('group', { name: 'OD Type' }).getByRole('radio', { name: 'RJM' })).toBeChecked();
+
+  await play(page, [0xb1, 102, 127]);
+  await expect(pedal.getByRole('button', { name: 'Channel 1 Bypass' })).toContainText('Channel 1 Bypass · Engaged');
+
+  await play(page, [0xb1, 71, 127]);
+  await expect(page.getByRole('region', { name: 'Dip switches' }).getByRole('switch', { name: 'Noise Gate' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+
+  await play(page, [0xb1, 29, 20]);
+  await expect(page.getByRole('group', { name: 'Hidden Options' }).getByRole('slider', { name: 'Gate Threshold' })).toHaveAttribute(
+    'aria-valuenow',
+    '20',
+  );
+
+  await play(page, [0xb1, 100, 90]);
+  await expect(page.getByRole('region', { name: 'Performance' }).getByRole('slider', { name: 'Expression' })).toHaveValue('90');
+});
+
+test('a CC outside the MIDI map is forwarded but not decoded, and shows in the MIDI Monitor', async ({ page }) => {
+  await withSimulatedInput(page);
+  await page.goto('/');
+  const log = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log');
+  await page.getByLabel('MIDI input').selectOption({ label: 'Test DAW' });
+  await page.getByRole('button', { name: 'Send All', exact: true }).click();
+  await expect(page.getByLabel('Sync Status')).toHaveText('In Sync');
+
+  await play(page, [0xb1, 105, 127]);
+  await expect(log.getByRole('listitem').last()).toHaveText('CC 105 = 127 → (not in MIDI map)');
+  await expect(page.getByLabel('Sync Status')).toHaveText('In Sync');
+
+  await page.getByRole('button', { name: /^Data/ }).click();
+  await page.getByRole('tab', { name: /MIDI Monitor/ }).click();
+  const rows = page.getByRole('complementary', { name: 'Data' }).getByRole('log', { name: 'Outgoing MIDI' }).getByRole('listitem');
+  await expect(rows.first()).toContainText(/CC\s*105\s*127\s*—/);
+});
+
 test('nothing passes through until an input is selected', async ({ page }) => {
   await withSimulatedInput(page);
   await page.goto('/');

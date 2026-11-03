@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PARAMS, paramByCc } from '../midi/map';
-import { dispatch, encodeSendAll, initialEditorState, sendAllOrder, type EditorAction, type EditorState } from './core';
+import { PARAMS, paramByCc, type ParamId } from '../midi/map';
+import { dispatch, encodeSendAll, initialEditorState, sendAllOrder, valueOf, type EditorAction, type EditorState } from './core';
 import { EMPTY_HISTORY } from './history';
 import { defaultWorkingState } from './state';
 
@@ -349,6 +349,38 @@ describe('receive (Pass-through)', () => {
 
     expect(result.messages).toEqual([[0xb1, 17, 90]]);
     expect(result.state.working.tone2).toBe(90);
+  });
+
+  // Every CC in SPEC.md §4.1–4.6, sent with value 3: knobs and Expression hold 3, toggles read 3 as position 3,
+  // and on/off params read ≥1 as on (127).
+  const SPEC_CCS: [cc: number, id: ParamId, held: number][] = [
+    [14, 'gain2', 3], [15, 'vol2', 3], [16, 'gain1', 3], [17, 'tone2', 3], [18, 'vol1', 3], [19, 'tone1', 3],
+    [21, 'ampType', 3], [22, 'effectOrder', 3], [23, 'odType', 3],
+    [27, 'gateRelease', 3], [29, 'gateThreshold', 3],
+    [102, 'channel1Bypass', 127], [103, 'channel2Bypass', 127],
+    [61, 'volume1Target', 127], [62, 'volume2Target', 127], [63, 'gain1Target', 127], [64, 'gain2Target', 127],
+    [65, 'tone1Target', 127], [66, 'tone2Target', 127], [67, 'sweep', 127], [68, 'polarity', 127],
+    [71, 'noiseGate', 127], [72, 'clean1', 127], [73, 'motoByp1', 127], [74, 'motoByp2', 127],
+    [75, 'contour2', 127], [76, 'presence2', 127], [77, 'master', 127],
+    [100, 'expression', 3],
+  ];
+
+  it('covers every param in the MIDI map', () => {
+    expect(SPEC_CCS.map(([, id]) => id).sort()).toEqual(Object.keys(PARAMS).sort());
+  });
+
+  it.each(SPEC_CCS)('forwards CC %i unchanged and updates %s', (cc, id, held) => {
+    const result = receive(fresh(), [0xb1, cc, 3]);
+
+    expect(result.messages).toEqual([[0xb1, cc, 3]]);
+    expect(valueOf(result.state, id)).toBe(held);
+  });
+
+  it.each([1, 7, 20, 24, 56, 105, 127])('forwards CC %i, outside the MIDI map, without decoding it', (cc) => {
+    const result = receive(fresh(), [0xb1, cc, 64]);
+
+    expect(result.messages).toEqual([[0xb1, cc, 64]]);
+    expect(result.state).toEqual(fresh());
   });
 
   it('does not record a passed-through CC for undo', () => {

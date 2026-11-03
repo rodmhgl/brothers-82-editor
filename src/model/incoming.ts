@@ -6,8 +6,8 @@ import type { MidiMessage } from '../midi/encode';
 export type IncomingRoute =
   /** Forwarded to the pedal unchanged, and followed by the editor. */
   | 'passThrough'
-  /** On another MIDI channel: ignored, never forwarded (MIDI Learn was dropped, #17). */
-  | 'learn'
+  /** On another MIDI channel: ignored, never forwarded. */
+  | 'otherMidiChannel'
   /** Neither: SysEx, MIDI clock, Active Sensing and the like. */
   | 'drop';
 
@@ -15,5 +15,5 @@ export type IncomingRoute =
 export function routeIncoming(bytes: MidiMessage, midiChannel: number): IncomingRoute {
   const sentOn = midiChannelOf(bytes);
   if (sentOn === null) return 'drop';
-  return sentOn === midiChannel ? 'passThrough' : 'learn';
+  return sentOn === midiChannel ? 'passThrough' : 'otherMidiChannel';
 }
