@@ -14,7 +14,7 @@
   --text-2: #4a2e3c;
   --ink: #2e0f22;
   /* Amber, deepened so it shows against cream and the ink reads on it. */
-  --accent: #bd7900;
+  --accent: #b87600;
   /* The dips and the active Toggle Slot. Themes with one accent set it to --accent. */
   --accent-2: var(--accent);
   /* Text on the accent: an armed button, a Toggle Slot. */
@@ -74,7 +74,7 @@
   --text-2: #4a2e3c;
   --accent: #b83a58;
   --on-accent: #fff8ef;
-  --warning: #9a3b00;
+  --warning: #8a5200;
   --empty-slot: #f7e2e6;
   --disc-hi: #fffafb;
 }
@@ -82,11 +82,11 @@
 /* Cream paper with the manual's plum as the accent, and amber for the dips. */
 :root[data-theme='plum-ink'] {
   --accent: #5b2543;
-  --accent-2: #bd7900;
+  --accent-2: #b87600;
   --on-accent: #fef1e3;
 }
 
-:root[data-theme='plum'] {
+:root[data-theme='plum-night'] {
   --paper: #2e1322;
   --card: #3b1a2d;
   --inset: #4a2439;

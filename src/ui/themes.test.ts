@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS, THEMES, type Theme } from '../store/session';
 
 // Each theme as app.css paints it: the :root tokens, overridden by that theme's :root[data-theme] block.
+type Rgb = [number, number, number];
+const THEME_IDS = Object.keys(THEMES) as Theme[];
 const CSS = readFileSync(new URL('./app.css', import.meta.url), 'utf8');
 
 function declarations(selector: string): Record<string, string> | undefined {
@@ -18,27 +20,28 @@ function tokensOf(theme: Theme): Record<string, string> {
   return { ...declarations(':root'), ...declarations(`:root[data-theme='${theme}']`) };
 }
 
-function colour(tokens: Record<string, string>, name: string): [number, number, number] {
+function colour(tokens: Record<string, string>, name: string): Rgb {
   let value = tokens[name];
   for (let ref; (ref = /^var\((--[\w-]+)\)$/.exec(value ?? '')); ) value = tokens[ref[1]!];
   const hex = /^#([0-9a-f]{6})$/i.exec(value ?? '')?.[1];
   if (!hex) throw new Error(`${name} is not a #rrggbb colour: ${value}`);
-  return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+  return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)) as Rgb;
 }
 
 /** WCAG 2 relative luminance. */
-function luminance([r, g, b]: [number, number, number]): number {
+function luminance([r, g, b]: Rgb): number {
   const lin = (c: number) => ((c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 }
 
 /** WCAG 2 contrast ratio. */
-function contrast(a: [number, number, number], b: [number, number, number]): number {
+function contrast(a: Rgb, b: Rgb): number {
   const [la, lb] = [luminance(a), luminance(b)];
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }
 
-function hue([r, g, b]: [number, number, number]): number {
+/** HSL hue, in degrees. */
+function hue([r, g, b]: Rgb): number {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   if (max === min) return 0;
@@ -49,13 +52,13 @@ function hue([r, g, b]: [number, number, number]): number {
 
 describe('themes', () => {
   it('offers six, each with its own palette in app.css', () => {
-    const themes = Object.keys(THEMES) as Theme[];
-    expect(themes).toHaveLength(6);
-    for (const theme of themes) {
+    expect(THEME_IDS).toHaveLength(6);
+    for (const theme of THEME_IDS) {
       if (theme !== DEFAULT_SETTINGS.theme) expect(declarations(`:root[data-theme='${theme}']`), theme).toBeDefined();
     }
   });
 
+  // Amber's hues, between orange (about 30°) and yellow-orange (about 50°).
   it('defaults to an amber accent', () => {
     const accent = colour(tokensOf(DEFAULT_SETTINGS.theme), '--accent');
     expect(hue(accent)).toBeGreaterThanOrEqual(30);
@@ -63,7 +66,7 @@ describe('themes', () => {
   });
 
   // WCAG 2 AA: 4.5:1 for text, 3:1 for a control or indicator against what surrounds it.
-  describe.each(Object.keys(THEMES) as Theme[])('%s', (theme) => {
+  describe.each(THEME_IDS)('%s', (theme) => {
     const tokens = tokensOf(theme);
     const ratio = (a: string, b: string) => contrast(colour(tokens, a), colour(tokens, b));
 
@@ -82,7 +85,7 @@ describe('themes', () => {
 
     it('keeps the accents visible against the page', () => {
       for (const accent of ['--accent', '--accent-2']) {
-        for (const surface of ['--paper', '--card']) {
+        for (const surface of ['--paper', '--card', '--inset']) {
           expect(ratio(accent, surface), `${accent} on ${surface}`).toBeGreaterThanOrEqual(3);
         }
       }

@@ -114,15 +114,15 @@ test('a theme recolours the editor at once and is kept between sessions', async 
   expect(await paper()).toBe('rgb(254, 241, 227)');
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('tab', { name: 'Settings' }).click();
-  await drawer.getByLabel('Theme').selectOption('Plum (dark)');
+  await drawer.getByLabel('Theme').selectOption('Plum Night (dark)');
   await expect.poll(paper).toBe('rgb(46, 19, 34)');
   await expect(themeColor).toHaveAttribute('content', '#2e1322');
-  await expect.poll(async () => (await savedSession(page))?.settings).toMatchObject({ theme: 'plum' });
+  await expect.poll(async () => (await savedSession(page))?.settings).toMatchObject({ theme: 'plum-night' });
 
   await page.reload();
 
   await expect.poll(paper).toBe('rgb(46, 19, 34)');
-  await expect(drawer.getByLabel('Theme')).toHaveValue('plum');
+  await expect(drawer.getByLabel('Theme')).toHaveValue('plum-night');
 });
 
 test('the editor stores its data under its own names', async ({ page }) => {

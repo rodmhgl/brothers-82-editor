@@ -16,7 +16,7 @@ export const THEMES = {
   page: 'Manual Page',
   pink: 'Pink',
   'plum-ink': 'Plum Ink',
-  plum: 'Plum (dark)',
+  'plum-night': 'Plum Night (dark)',
   'amber-night': 'Amber Night (dark)',
 } as const;
 
