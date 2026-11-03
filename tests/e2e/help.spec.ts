@@ -80,7 +80,8 @@ test('the hover card follows the context: Vol 1 with Master on', async ({ page }
   const tip = page.getByRole('tooltip');
 
   await page.getByRole('group', { name: 'Customize' }).getByRole('switch', { name: 'Master' }).click();
-  await editor.getByRole('slider', { name: 'Vol 1', exact: true }).focus();
+  // Hover, not focus: after the click, focusing from script isn't :focus-visible, so it shows no card.
+  await editor.getByRole('slider', { name: 'Vol 1', exact: true }).hover();
   await expect(tip).toContainText('64 · 50% · No effect');
   await expect(tip).toContainText('Master is on');
 });
