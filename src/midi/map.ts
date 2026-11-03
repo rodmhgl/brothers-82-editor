@@ -131,7 +131,7 @@ export const PARAMS = {
   motoByp2: dip('motoByp2', 'MotoByp 2', 74, 'dipRight', 'On the pedal, makes the Channel 2 footswitch momentary. The editor’s bypass buttons always latch.'),
   contour2: dip('contour2', 'Contour 2', 75, 'dipRight', 'Inverts the midrange response of Channel 2.'),
   presence2: dip('presence2', 'Presence 2', 76, 'dipRight', 'Inverts the high-frequency response of Channel 2.'),
-  master: dip('master', 'Master', 77, 'dipRight', 'Makes Vol 2 set the overall output volume at all times, even with Channel 2 bypassed.'),
+  master: dip('master', 'Master', 77, 'dipRight', 'Makes Vol 2 set the overall output volume at all times, even with Channel 2 bypassed. Vol 1 then works only with both Channels on, as a stack mix control.'),
   // Performance Controls (SPEC.md §4.6): sent live, never stored in a Preset or sent by Send All.
   expression: {
     id: 'expression',
@@ -143,7 +143,7 @@ export const PARAMS = {
     min: 0,
     max: 127,
     default: 0,
-    help: 'Moves the Expression / CV targets like an expression pedal, from heel (0) to toe (127).',
+    help: 'Moves the knobs whose Expression / CV target dips are on, like an expression pedal, from heel (0) to toe (127). It needs at least one target dip on.',
   },
 } as const satisfies Record<string, ParamDef>;
 
@@ -161,6 +161,9 @@ export type PerformanceParamId = {
 
 /** Effect Order's 2+1 position, as the Working State holds it. */
 export const EFFECT_ORDER_PARALLEL = PARAMS.effectOrder.values[1]!.value;
+
+/** Amp Type's Solo position, the voicing Contour 2 and Presence 2 work the other way round for. */
+export const AMP_TYPE_SOLO = PARAMS.ampType.values[2]!.value;
 
 /** The Expression / CV target dip for each knob (CC 61–66). */
 export const TARGET_DIPS: Partial<Record<PresetParamId, PresetParamId>> = {

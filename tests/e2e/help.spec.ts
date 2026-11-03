@@ -73,3 +73,30 @@ test('the Getting connected guide runs the MIDI channel wizard and switches to t
   await wizard.getByRole('button', { name: 'Cancel' }).click();
   await expect(wizard).toHaveCount(0);
 });
+
+test('the hover card follows the context: Vol 1 with Master on', async ({ page }) => {
+  await page.goto('/');
+  const editor = page.getByRole('region', { name: 'Editor' });
+  const tip = page.getByRole('tooltip');
+
+  await page.getByRole('group', { name: 'Customize' }).getByRole('switch', { name: 'Master' }).click();
+  // Hover, not focus: after the click, focusing from script isn't :focus-visible, so it shows no card.
+  await editor.getByRole('slider', { name: 'Vol 1', exact: true }).hover();
+  await expect(tip).toContainText('64 · 50% · No effect');
+  await expect(tip).toContainText('Master is on');
+});
+
+test('the Help tab offers both guides', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Help ?' }).click();
+  const drawer = page.getByRole('complementary', { name: 'Data' });
+  const guides = drawer.getByRole('navigation', { name: 'Guides' });
+
+  await expect(drawer.getByRole('region', { name: 'Getting connected' })).toContainText('Bank');
+  await guides.getByRole('button', { name: 'How the Channels interact' }).click();
+  const guide = drawer.getByRole('region', { name: 'How the Channels interact' });
+  await expect(guide.getByRole('heading', { name: 'Effect Order: which Channel comes first' })).toBeVisible();
+  await expect(guide).toContainText('stack mix');
+  await guides.getByRole('button', { name: 'Getting connected' }).click();
+  await expect(drawer.getByRole('region', { name: 'Getting connected' })).toBeVisible();
+});

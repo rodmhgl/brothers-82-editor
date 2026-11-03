@@ -23,4 +23,17 @@ describe('help content', () => {
     const actions = blocks.flatMap((b) => (b.type === 'action' ? [b.id] : []));
     expect(actions.sort()).toEqual(['midi-channel-wizard', 'use-virtual-pedal']);
   });
+
+  it('explains the physical Bank dip in Getting connected', () => {
+    const guide = read('getting-connected.md');
+    for (const topic of [/Bank/, /Slots? 3/, /Slots? 4/, /Program Change/]) expect(guide).toMatch(topic);
+  });
+
+  it('has a How the Channels interact guide covering Effect Order, Clean 1 and Master', () => {
+    const guide = read('how-the-channels-interact.md');
+    expect(parseHelp(guide)[0]).toMatchObject({ type: 'heading', level: 2, text: [{ text: 'How the Channels interact' }] });
+    for (const topic of [/Effect Order/, /2>1/, /2\+1/, /2<1/, /Clean 1/, /clean blend/, /Master/, /stack mix/, /Vol 2/]) {
+      expect(guide).toMatch(topic);
+    }
+  });
 });

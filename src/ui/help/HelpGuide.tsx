@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import gettingConnected from '../../help/getting-connected.md?raw';
+import howTheChannelsInteract from '../../help/how-the-channels-interact.md?raw';
 import { parseHelp, type HelpBlock, type Inline } from '../../help/markdown';
 import { VIRTUAL_PEDAL_PORT } from '../../midi/transport/virtual';
 import { useEditorStore } from '../../store/editorStore';
@@ -16,7 +17,7 @@ function guide(markdown: string): Guide {
 }
 
 /** The guides the Help tab offers, in order. */
-export const GUIDES: Guide[] = [guide(gettingConnected)];
+export const GUIDES: Guide[] = [guide(gettingConnected), guide(howTheChannelsInteract)];
 
 function InlineText({ text }: { text: Inline[] }) {
   return text.map((t, i) => (t.type === 'strong' ? <strong key={i}>{t.text}</strong> : t.type === 'code' ? <code key={i}>{t.text}</code> : t.text));
