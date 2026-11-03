@@ -570,6 +570,15 @@ describe('undo/redo', () => {
   });
 });
 
+describe('Raw MIDI CC', () => {
+  it('sends CC 56 like any other: there is no CC 56 guard', () => {
+    useEditorStore.getState().forward(controlChange(2, 56, 127));
+
+    expect(useEditorStore.getState().sent[0]?.bytes).toEqual([0xb1, 56, 127]);
+    expect(virtualPedal.getSnapshot().log.at(-1)?.text).toBe('CC 56 = 127 → (not in MIDI map)');
+  });
+});
+
 describe('Raw MIDI Program Change', () => {
   /** Makes an undoable edit, so a cleared history shows. */
   function editMix() {
@@ -667,6 +676,19 @@ describe('MIDI input and Pass-through', () => {
     expect(useEditorStore.getState().sent[0]?.bytes).toEqual([0xb1, 17, 90]);
     expect(virtualPedal.getSnapshot().log.slice(from).map((e) => e.text)).toEqual(['CC 17 = 90 → Tone 2']);
     expect(useEditorStore.getState().canUndo).toBe(false);
+  });
+
+  it('forwards a CC outside the MIDI map to the pedal without decoding it', async () => {
+    const fake = await connectWithInput();
+    useEditorStore.getState().setInput('in-1');
+    const before = useEditorStore.getState().editor;
+    const from = virtualPedal.getSnapshot().log.length;
+
+    fake.play([0xb1, 105, 127]);
+
+    expect(useEditorStore.getState().sent[0]?.bytes).toEqual([0xb1, 105, 127]);
+    expect(useEditorStore.getState().editor).toEqual(before);
+    expect(virtualPedal.getSnapshot().log.slice(from).map((e) => e.text)).toEqual(['CC 105 = 127 → (not in MIDI map)']);
   });
 
   it('never holds back a passed-through continuous control', async () => {
