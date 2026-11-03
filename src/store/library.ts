@@ -1,6 +1,15 @@
 import { create } from 'zustand';
 import type { PresetParamId } from '../midi/map';
-import { parseLibraryFile, parsePreset, presetName, serializeBundle, serializePreset, type Preset } from '../model/schema';
+import {
+  BUNDLE_EXTENSION,
+  PRESET_EXTENSION,
+  parseLibraryFile,
+  parsePreset,
+  presetName,
+  serializeBundle,
+  serializePreset,
+  type Preset,
+} from '../model/schema';
 import { isChangedSinceStored, slotName, type SlotMap, type SlotMapEntry } from '../model/slotMap';
 import { defaultWorkingState, type WorkingState } from '../model/state';
 import { useEditorStore, type createEditorStore } from './editorStore';
@@ -218,7 +227,7 @@ function presetFileName(name: string, taken: string[]): string {
   const slug = slugOf(name, 'preset');
   const used = new Set(taken.map((t) => t.toLowerCase()));
   for (let n = 1; ; n++) {
-    const fileName = `${slug}${n > 1 ? `-${n}` : ''}.b82preset.json`;
+    const fileName = `${slug}${n > 1 ? `-${n}` : ''}${PRESET_EXTENSION}`;
     if (!used.has(fileName)) return fileName;
   }
 }
@@ -426,7 +435,7 @@ export function createLibraryStore(editor: EditorStoreApi, deps: LibraryDeps) {
         const name = get().folderName ?? 'Library';
         const at = recordBackupCheck();
         const presets = get().presets.map((p) => p.preset);
-        deps.download(`${slugOf(name, 'library')}-${at.slice(0, 10)}.b82bundle.json`, serializeBundle(name, presets, at));
+        deps.download(`${slugOf(name, 'library')}-${at.slice(0, 10)}${BUNDLE_EXTENSION}`, serializeBundle(name, presets, at));
       },
       snoozeBackup() {
         recordBackupCheck();

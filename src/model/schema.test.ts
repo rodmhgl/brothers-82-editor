@@ -95,6 +95,13 @@ describe('parsePreset rejects', () => {
       error: 'Made by a newer version of the editor, please update',
     });
   });
+
+  it('a file made by a newer version, even if it lacks fields this version needs', () => {
+    expect(parse({ ...valid(), schemaVersion: 2, id: undefined, name: undefined })).toEqual({
+      ok: false,
+      error: 'Made by a newer version of the editor, please update',
+    });
+  });
 });
 
 describe('parsePreset normalises params the way the pedal decodes them, and reports each change', () => {
