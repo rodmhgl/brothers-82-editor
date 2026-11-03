@@ -250,10 +250,11 @@ describe('Slots', () => {
     expect(result.state.history).toEqual(EMPTY_HISTORY);
   });
 
-  it('recalling a Toggle Slot is Unknown until the editor stores to it', () => {
+  it('recalling any Toggle Slot is Unknown until the editor stores to it: no Slot is special', () => {
     const inSync = run(fresh(), { type: 'sendAllFinished' }).state;
-    expect(dispatch(inSync, { type: 'recall', slot: 1 }).state.sync).toBe('unknown');
-    expect(dispatch(inSync, { type: 'recall', slot: 2 }).state.sync).toBe('unknown');
+    for (const slot of [1, 2, 3, 4]) {
+      expect(dispatch(inSync, { type: 'recall', slot }).state.sync, `Slot ${slot}`).toBe('unknown');
+    }
 
     const stored = run(inSync, { type: 'store', slot: 2, origin, writtenAt: 'when' }, { type: 'live' }).state;
     expect(dispatch(stored, { type: 'recall', slot: 2 }).state.sync).toBe('inSync');

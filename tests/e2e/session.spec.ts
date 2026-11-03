@@ -18,13 +18,19 @@ function savedSession(page: Page) {
   );
 }
 
-test('reload restores the Working State, Slot Map, MIDI channel and layout, Possibly Stale', async ({ page }) => {
+test('reload restores every control, the Slot Map, MIDI channel and layout, Possibly Stale', async ({ page }) => {
   await page.goto('/');
   const connection = page.getByRole('banner', { name: 'Connection' });
   const syncStatus = connection.getByLabel('Sync Status');
   const editor = page.getByRole('region', { name: 'Editor' });
   const vol1 = editor.getByRole('slider', { name: 'Vol 1', exact: true });
   const ampType = editor.getByRole('group', { name: 'Amp Type' });
+  const channel1 = editor.getByRole('button', { name: 'Channel 1 Bypass' });
+  const channel2 = editor.getByRole('button', { name: 'Channel 2 Bypass' });
+  const gateThreshold = page
+    .getByRole('region', { name: 'Dip switches' })
+    .getByRole('group', { name: 'Hidden Options' })
+    .getByRole('slider', { name: 'Gate Threshold' });
   const rail = page.getByRole('navigation', { name: 'Slots' });
   const drawer = page.getByRole('complementary', { name: 'Data' });
 
@@ -39,6 +45,9 @@ test('reload restores the Working State, Slot Map, MIDI channel and layout, Poss
   await expect(rail.getByRole('button', { name: 'Recall Slot 7 · MIDI only · Untitled' })).toBeVisible();
   await expect(syncStatus).toHaveText('In Sync');
   await vol1.press('PageUp');
+  await gateThreshold.press('ArrowUp');
+  await channel1.click();
+  await channel2.click();
   await connection.getByLabel('MIDI channel').selectOption('5');
   await expect.poll(async () => (await savedSession(page))?.midiChannel).toBe(5);
 
@@ -47,6 +56,9 @@ test('reload restores the Working State, Slot Map, MIDI channel and layout, Poss
   await expect(syncStatus).toHaveText('Possibly Stale');
   await expect(vol1).toHaveAttribute('aria-valuenow', '84');
   await expect(ampType.getByRole('radio', { name: '800' })).toBeChecked();
+  await expect(gateThreshold).toHaveAttribute('aria-valuenow', '65');
+  await expect(channel1).toContainText('Channel 1 Bypass · Engaged');
+  await expect(channel2).toContainText('Channel 2 Bypass · Bypassed');
   await expect(connection.getByLabel('MIDI channel')).toHaveValue('5');
   await expect(connection.getByLabel('Working State')).toHaveText('Untitled •');
   await expect(rail.getByRole('button', { name: 'Recall Slot 7 · MIDI only · Untitled' })).toBeVisible();

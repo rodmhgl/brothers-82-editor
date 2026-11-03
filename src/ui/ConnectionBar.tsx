@@ -11,8 +11,10 @@ import { StoreButton } from './StoreButton';
 import { commandKeys } from './useShortcuts';
 
 const SYNC_STATUS_HELP: Record<SyncStatus, string> = {
-  inSync: 'The pedal should match the editor: everything was sent. Touching the pedal’s own controls isn’t detected.',
-  possiblyStale: 'Since launch or reconnecting, the pedal may hold anything. Send All to match it.',
+  inSync:
+    'The pedal should match the editor: everything was sent, or a Slot the editor stored was recalled. Touching the pedal’s own controls isn’t detected.',
+  possiblyStale:
+    'Since launch, reconnecting or going Live, or while a new Working State is still being sent, the pedal may hold anything. Send All to match it.',
   unknown: 'A Slot was recalled that the editor doesn’t know. Send All to match it.',
 };
 

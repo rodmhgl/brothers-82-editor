@@ -130,6 +130,20 @@ describe('the Test button', () => {
     ]);
     expect(useEditorStore.getState().editor.working.channel2Bypass).toBe(127);
   });
+
+  it('with Channel 2 bypassed, engages it, then bypasses it again', async () => {
+    useEditorStore.getState().setParam('channel2Bypass', 0);
+    const before = virtualPedal.getSnapshot().log.length;
+    const done = useEditorStore.getState().test();
+    await vi.runAllTimersAsync();
+    await done;
+
+    expect(virtualPedal.getSnapshot().log.slice(before).map((e) => e.text)).toEqual([
+      'CC 103 = 127 → Channel 2 Bypass → Engaged',
+      'CC 103 = 0 → Channel 2 Bypass → Bypassed',
+    ]);
+    expect(useEditorStore.getState().editor.working.channel2Bypass).toBe(0);
+  });
 });
 
 describe('Sync Status in the editor', () => {

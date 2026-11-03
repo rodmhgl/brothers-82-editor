@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultWorkingState } from '../model/state';
+import { defaultWorkingState, type WorkingState } from '../model/state';
 import { DEFAULT_SETTINGS, SESSION_VERSION, THEMES, parseSession, type Session } from './session';
 
 const working = { ...defaultWorkingState(), vol2: 100, ampType: 3 };
@@ -31,6 +31,20 @@ const stored = (session: unknown) => JSON.parse(JSON.stringify(session)) as Reco
 describe('parseSession', () => {
   it('reads back a session as it was saved', () => {
     expect(parseSession(stored(saved))).toEqual(saved);
+  });
+
+  it('reads back every Working State control, including Hidden Options and both Channel Bypass states', () => {
+    // Every control away from its default.
+    const everyParam = {
+      gain2: 10, vol2: 20, gain1: 30, tone2: 40, vol1: 50, tone1: 60,
+      ampType: 3, effectOrder: 1, odType: 3,
+      gateRelease: 5, gateThreshold: 120,
+      channel1Bypass: 127, channel2Bypass: 0,
+      volume1Target: 127, volume2Target: 127, gain1Target: 127, gain2Target: 127, tone1Target: 127, tone2Target: 127,
+      sweep: 127, polarity: 127,
+      noiseGate: 127, clean1: 127, motoByp1: 127, motoByp2: 127, contour2: 127, presence2: 127, master: 127,
+    } satisfies WorkingState;
+    expect(parseSession(stored({ ...saved, working: everyParam }))!.working).toEqual(everyParam);
   });
 
   it('ignores anything that is not a session of this version', () => {
