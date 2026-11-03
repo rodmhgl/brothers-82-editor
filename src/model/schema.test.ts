@@ -27,7 +27,7 @@ describe('serializePreset', () => {
       'modifiedAt',
       'params',
     ]);
-    expect(file.format).toBe('clean-preset');
+    expect(file.format).toBe('brothers-82-preset');
     expect(file.schemaVersion).toBe(1);
     expect(typeof file.appVersion).toBe('string');
     expect(Object.keys(file.params).slice(0, 6)).toEqual(['gain2', 'vol2', 'gain1', 'tone2', 'vol1', 'tone1']);
@@ -40,7 +40,7 @@ describe('serializePreset', () => {
   it('is 2-space JSON with a trailing newline, so an unchanged Preset writes an identical file', () => {
     const text = serializePreset(shimmer);
     expect(text.endsWith('}\n')).toBe(true);
-    expect(text).toContain('\n  "format": "clean-preset",\n');
+    expect(text).toContain('\n  "format": "brothers-82-preset",\n');
     expect(serializePreset(shimmer)).toBe(text);
   });
 });
@@ -56,20 +56,23 @@ describe('parsePreset rejects', () => {
   const parse = (file: unknown) => parsePreset(JSON.stringify(file));
 
   it.each([
-    ['broken JSON', '{"format": "clean-preset",'],
+    ['broken JSON', '{"format": "brothers-82-preset",'],
     ['a JSON value that is not an object', '[1, 2]'],
   ])('%s', (_, text) => {
     expect(parsePreset(text)).toEqual({ ok: false, error: 'Not a Preset file' });
   });
 
   it('a file whose format is not a Preset, whatever its extension', () => {
-    expect(parse({ ...valid(), format: 'clean-bundle' })).toEqual({ ok: false, error: 'Not a Preset file' });
+    expect(parse({ ...valid(), format: 'brothers-82-bundle' })).toEqual({ ok: false, error: 'Not a Preset file' });
     expect(parse({ ...valid(), format: undefined })).toEqual({ ok: false, error: 'Not a Preset file' });
   });
 
   it.each([
     ['lost-found-preset', 'This is a Lost+Found Preset, open it in the Lost+Found editor'],
     ['lost-found-bundle', 'This is a Lost+Found Bundle, open it in the Lost+Found editor'],
+    ['clean-preset', 'This is a Clean Preset, open it in the Clean editor'],
+    ['clean-bundle', 'This is a Clean Bundle, open it in the Clean editor'],
+    ['clean-preset-v2', 'This is a Clean file, open it in the Clean editor'],
   ])('a %s file, naming the pedal it belongs to', (format, error) => {
     expect(parse({ ...valid(), format })).toEqual({ ok: false, error });
   });
@@ -88,6 +91,13 @@ describe('parsePreset rejects', () => {
 
   it('a file made by a newer version, rather than loading it best-effort', () => {
     expect(parse({ ...valid(), schemaVersion: 2 })).toEqual({
+      ok: false,
+      error: 'Made by a newer version of the editor, please update',
+    });
+  });
+
+  it('a file made by a newer version, even if it lacks fields this version needs', () => {
+    expect(parse({ ...valid(), schemaVersion: 2, id: undefined, name: undefined })).toEqual({
       ok: false,
       error: 'Made by a newer version of the editor, please update',
     });
@@ -172,7 +182,7 @@ describe('Bundles', () => {
     const file = JSON.parse(serializeBundle('My Presets', [shimmer, tape], '2026-10-07T09:00:00.000Z'));
 
     expect(Object.keys(file)).toEqual(['format', 'schemaVersion', 'appVersion', 'name', 'exportedAt', 'presets']);
-    expect(file).toMatchObject({ format: 'clean-bundle', schemaVersion: 1, name: 'My Presets' });
+    expect(file).toMatchObject({ format: 'brothers-82-bundle', schemaVersion: 1, name: 'My Presets' });
     expect(file.exportedAt).toBe('2026-10-07T09:00:00.000Z');
     expect(file.presets).toEqual([JSON.parse(serializePreset(shimmer)), JSON.parse(serializePreset(tape))]);
     expect(file).not.toHaveProperty('id');
@@ -217,13 +227,13 @@ describe('Bundles', () => {
   it.each([
     ['broken JSON', '{', 'Not a Preset or Bundle file'],
     ['another format', JSON.stringify({ format: 'something-else' }), 'Not a Preset or Bundle file'],
-    ['a Bundle with no presets list', JSON.stringify({ format: 'clean-bundle', schemaVersion: 1 }), 'Missing presets'],
+    ['a Bundle with no presets list', JSON.stringify({ format: 'brothers-82-bundle', schemaVersion: 1 }), 'Missing presets'],
     [
       'a Bundle made by a newer version',
-      JSON.stringify({ format: 'clean-bundle', schemaVersion: 2, presets: [] }),
+      JSON.stringify({ format: 'brothers-82-bundle', schemaVersion: 2, presets: [] }),
       'Made by a newer version of the editor, please update',
     ],
-    ['a broken Preset file', JSON.stringify({ format: 'clean-preset', schemaVersion: 1 }), 'Missing id'],
+    ['a broken Preset file', JSON.stringify({ format: 'brothers-82-preset', schemaVersion: 1 }), 'Missing id'],
     [
       'a Lost+Found Preset',
       JSON.stringify({ format: 'lost-found-preset', schemaVersion: 1 }),
@@ -233,6 +243,16 @@ describe('Bundles', () => {
       'a Lost+Found Bundle',
       JSON.stringify({ format: 'lost-found-bundle', schemaVersion: 1, presets: [] }),
       'This is a Lost+Found Bundle, open it in the Lost+Found editor',
+    ],
+    [
+      'a Clean Preset',
+      JSON.stringify({ format: 'clean-preset', schemaVersion: 1, id: 'c-1', name: 'Clean', params: {} }),
+      'This is a Clean Preset, open it in the Clean editor',
+    ],
+    [
+      'a Clean Bundle',
+      JSON.stringify({ format: 'clean-bundle', schemaVersion: 1, presets: [] }),
+      'This is a Clean Bundle, open it in the Clean editor',
     ],
   ])('rejects %s', (_, text, error) => {
     expect(parseLibraryFile(text)).toEqual({ ok: false, error });

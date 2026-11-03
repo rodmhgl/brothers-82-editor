@@ -1,21 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { defaultWorkingState } from './state';
-import { customizeSummary } from './summary';
+import { toggleSummary } from './summary';
 
-describe('customizeSummary', () => {
-  it('names the active Customize dips in bank order', () => {
-    expect(customizeSummary({ ...defaultWorkingState(), master: 127, contour2: 127, clean1: 127 })).toBe(
-      'Clean 1 · Contour 2 · Master',
-    );
+describe('toggleSummary', () => {
+  it('names the Amp Type, OD Type and Effect Order', () => {
+    expect(toggleSummary(defaultWorkingState())).toBe('Plexi · Super · 2+1');
   });
 
-  it('ignores the Expression / CV target dips', () => {
-    expect(customizeSummary({ ...defaultWorkingState(), sweep: 127, gain1Target: 127, noiseGate: 127 })).toBe(
-      'Noise Gate',
-    );
+  it('follows each toggle', () => {
+    expect(toggleSummary({ ...defaultWorkingState(), ampType: 3, odType: 1, effectOrder: 3 })).toBe('Solo · 808 · 2<1');
   });
 
-  it('is empty when no Customize dip is on', () => {
-    expect(customizeSummary(defaultWorkingState())).toBe('');
+  it('ignores the dips', () => {
+    expect(toggleSummary({ ...defaultWorkingState(), noiseGate: 127, master: 127 })).toBe('Plexi · Super · 2+1');
   });
 });

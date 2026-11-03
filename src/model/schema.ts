@@ -3,21 +3,32 @@ import type { WorkingState } from './state';
 
 // The Preset file format (ADR 0002, SPEC.md §5.6): a small envelope and a flat map of raw preset-scoped params.
 
-export const PRESET_FORMAT = 'clean-preset';
+export const PRESET_FORMAT = 'brothers-82-preset';
+export const PRESET_EXTENSION = '.b82preset.json';
 
 /** A Bundle: full copies of several Presets in one file, for sharing or backup. */
-export const BUNDLE_FORMAT = 'clean-bundle';
+export const BUNDLE_FORMAT = 'brothers-82-bundle';
+export const BUNDLE_EXTENSION = '.b82bundle.json';
 
-/** Another pedal's file is refused, never loaded best-effort: it would come out an all-defaults Preset (ADR 0002). */
-const OTHER_PEDALS: Record<string, string> = {
-  'lost-found-preset': 'This is a Lost+Found Preset, open it in the Lost+Found editor',
-  'lost-found-bundle': 'This is a Lost+Found Bundle, open it in the Lost+Found editor',
-};
+/**
+ * Another pedal's file is refused, never loaded best-effort: it would come out an all-defaults Preset (ADR 0002).
+ * Each `format` prefix names the editor it belongs to.
+ */
+const OTHER_PEDAL_PREFIXES: [prefix: string, editor: string][] = [
+  ['clean-', 'Clean'],
+  ['lost-found-', 'Lost+Found'],
+];
 
 /** Why a file object belongs to another pedal, or null if it doesn't seem to. */
 function otherPedalError(file: unknown): string | null {
-  if (!isObject(file) || typeof file.format !== 'string' || !Object.hasOwn(OTHER_PEDALS, file.format)) return null;
-  return OTHER_PEDALS[file.format]!;
+  if (!isObject(file) || typeof file.format !== 'string') return null;
+  const format = file.format;
+  const pedal = OTHER_PEDAL_PREFIXES.find(([prefix]) => format.startsWith(prefix));
+  if (!pedal) return null;
+  const [prefix, editor] = pedal;
+  const rest = format.slice(prefix.length);
+  const kind = rest === 'preset' ? 'Preset' : rest === 'bundle' ? 'Bundle' : 'file';
+  return `This is a ${editor} ${kind}, open it in the ${editor} editor`;
 }
 
 /** Bump with a migration whenever a preset param is added, a param ID is renamed or what a value means changes (ADR 0002). */
@@ -145,11 +156,12 @@ function readPreset(file: unknown): ParseResult {
   const otherPedal = otherPedalError(file);
   if (otherPedal) return { ok: false, error: otherPedal };
   if (!isObject(file) || file.format !== PRESET_FORMAT) return { ok: false, error: 'Not a Preset file' };
+  // A newer file may hold its fields differently, so its version is checked first.
+  const versionError = schemaVersionError(file.schemaVersion);
+  if (versionError) return { ok: false, error: versionError };
   if (typeof file.id !== 'string' || !file.id) return { ok: false, error: 'Missing id' };
   const name = typeof file.name === 'string' ? presetName(file.name) : null;
   if (!name) return { ok: false, error: 'Missing name' };
-  const versionError = schemaVersionError(file.schemaVersion);
-  if (versionError) return { ok: false, error: versionError };
   const warnings: string[] = [];
   if ((file.name as string).trim().length > MAX_NAME_LENGTH) {
     warnings.push(`Name longer than ${MAX_NAME_LENGTH} characters: shortened`);

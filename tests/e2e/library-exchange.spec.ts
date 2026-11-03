@@ -37,6 +37,9 @@ test.describe('without folder access', () => {
     await expect(drawer.getByText('Browser storage · kept in this browser only')).toBeVisible();
     await expect(drawer.getByRole('button', { name: 'Choose folder…' })).toHaveCount(0);
     await expect(drawer.getByRole('status', { name: 'Back up your Library' })).toHaveCount(0);
+    // No Factory Presets: a new Library starts empty.
+    await expect(presets.getByRole('button', { name: /^Recall/ })).toHaveCount(0);
+    await expect(presets.getByRole('listitem')).toHaveText('No Presets in this Library yet.');
 
     await editor.getByRole('slider', { name: 'Vol 1', exact: true }).press('PageUp');
     await saveAs(page, 'Shimmer Tape');
@@ -93,7 +96,7 @@ test.describe('with a Library folder', () => {
     const download = page.waitForEvent('download');
     await drawer.getByRole('button', { name: 'Export Bundle' }).click();
     const bundle = await download;
-    expect(bundle.suggestedFilename()).toMatch(/^my-presets-\d{4}-\d{2}-\d{2}\.cleanbundle\.json$/);
+    expect(bundle.suggestedFilename()).toMatch(/^my-presets-\d{4}-\d{2}-\d{2}\.b82bundle\.json$/);
     const bundlePath = await bundle.path();
 
     for (const name of ['Ambience', 'Echo']) {
@@ -127,24 +130,34 @@ test.describe('with a Library folder', () => {
     await expect(workingState).toHaveText('Echo •');
   });
 
-  test('a Lost+Found Preset is refused, not imported as a Clean one', async ({ page }) => {
+  test('another pedal’s files and newer files are refused, not imported', async ({ page }) => {
     await page.goto('/');
     const drawer = await openLibrary(page);
     await drawer.getByRole('button', { name: 'Choose folder…' }).click();
 
-    const file = { format: 'lost-found-preset', schemaVersion: 1, id: 'lf-1', name: 'Shimmer', params: {} };
-    await drawer.getByLabel('Import Preset or Bundle files').setInputFiles({
-      name: 'shimmer.lfpreset.json',
+    const json = (name: string, file: object) => ({
+      name,
       mimeType: 'application/json',
       buffer: Buffer.from(JSON.stringify(file)),
     });
+    await drawer.getByLabel('Import Preset or Bundle files').setInputFiles([
+      json('glass.cleanpreset.json', { format: 'clean-preset', schemaVersion: 1, id: 'c-1', name: 'Glass', params: {} }),
+      json('shared.cleanbundle.json', { format: 'clean-bundle', schemaVersion: 1, presets: [] }),
+      json('shimmer.lfpreset.json', { format: 'lost-found-preset', schemaVersion: 1, id: 'lf-1', name: 'Shimmer', params: {} }),
+      json('future.b82preset.json', { format: 'brothers-82-preset', schemaVersion: 2, id: 'f-1', name: 'Future', params: {} }),
+    ]);
 
     const report = drawer.getByRole('status', { name: 'Import' });
     await expect(report).toContainText('0 added');
-    await report.getByText('1 import problem').click();
-    await expect(report).toContainText(
+    await report.getByText('4 import problems').click();
+    for (const problem of [
+      'glass.cleanpreset.json: This is a Clean Preset, open it in the Clean editor',
+      'shared.cleanbundle.json: This is a Clean Bundle, open it in the Clean editor',
       'shimmer.lfpreset.json: This is a Lost+Found Preset, open it in the Lost+Found editor',
-    );
+      'future.b82preset.json: Made by a newer version of the editor, please update',
+    ]) {
+      await expect(report).toContainText(problem);
+    }
     await expect(drawer.getByRole('list', { name: 'Presets' }).getByRole('button', { name: /^Recall/ })).toHaveCount(0);
   });
 });

@@ -42,6 +42,9 @@ test('save, edit and recall round-trip the Working State and the Virtual Pedal',
   await drawer.getByRole('button', { name: 'Choose folder…' }).click();
   await expect(drawer.getByText('Folder · My Presets')).toBeVisible();
   await expect(workingState).toHaveText('Untitled');
+  // No Factory Presets: a new Library starts empty.
+  await expect(presets.getByRole('button', { name: /^Recall/ })).toHaveCount(0);
+  await expect(presets.getByRole('listitem')).toHaveText('No Presets in this folder yet.');
 
   // Edit, then Save: the Working State has no Preset yet, so Save asks for a name.
   await ampType.getByRole('radio', { name: '800' }).check();
@@ -55,11 +58,11 @@ test('save, edit and recall round-trip the Working State and the Virtual Pedal',
 
   await expect(workingState).toHaveText('Shimmer Tape');
   await expect(presets.getByRole('listitem')).toHaveCount(1);
-  await expect(presets.getByLabel('Customize dips')).toHaveText('Master');
-  const file = await readPresetFile(page, 'shimmer-tape.cleanpreset.json');
-  expect(file).toMatchObject({ format: 'clean-preset', schemaVersion: 1, name: 'Shimmer Tape' });
-  expect(file.params).toMatchObject({ ampType: 1, vol1: 74, channel1Bypass: 127, master: 127 });
-  expect(file.params).not.toHaveProperty('expression');
+  await expect(presets.getByLabel('Toggles')).toHaveText('800 · Super · 2+1');
+  const file = await readPresetFile(page, 'shimmer-tape.b82preset.json');
+  expect(file).toMatchObject({ format: 'brothers-82-preset', schemaVersion: 1, name: 'Shimmer Tape' });
+  expect(file.params).toMatchObject({ ampType: 1, vol1: 74, channel1Bypass: 127, channel2Bypass: 127, master: 127 });
+  for (const notHeld of ['expression', 'bank']) expect(file.params).not.toHaveProperty(notHeld);
 
   // Further edits mark it modified; New replaces it with the defaults.
   await editor.getByRole('slider', { name: 'Vol 1', exact: true }).press('PageUp');
@@ -98,7 +101,7 @@ test('Rename, Duplicate and Delete change the Library folder', async ({ page }) 
   await presets.getByLabel('Preset name').fill('Glass Choir');
   await presets.getByLabel('Preset name').press('Enter');
   await expect(workingState).toHaveText('Glass Choir');
-  expect((await readPresetFile(page, 'glass-choir.cleanpreset.json')).name).toBe('Glass Choir');
+  expect((await readPresetFile(page, 'glass-choir.b82preset.json')).name).toBe('Glass Choir');
 
   await presets.getByRole('button', { name: 'Duplicate Glass Choir' }).click();
   await expect(presets.getByRole('button', { name: /^Recall/ })).toHaveText(['Glass Choir', 'Glass Choir copy']);
@@ -106,5 +109,5 @@ test('Rename, Duplicate and Delete change the Library folder', async ({ page }) 
   await presets.getByRole('button', { name: 'Delete Glass Choir copy' }).click();
   await presets.getByRole('button', { name: 'Delete Glass Choir copy? Click again' }).click();
   await expect(presets.getByRole('button', { name: /^Recall/ })).toHaveText(['Glass Choir']);
-  expect(await listFiles(page)).toEqual(['glass-choir.cleanpreset.json']);
+  expect(await listFiles(page)).toEqual(['glass-choir.b82preset.json']);
 });
