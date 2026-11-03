@@ -1,4 +1,4 @@
-import { SLOTS, isToggleSlot, slotNumber, slotReach } from '../../model/slots';
+import { SLOTS, TOGGLE_SLOT_COUNT, isToggleSlot, slotNumber, slotReach } from '../../model/slots';
 import { useEditorStore } from '../../store/editorStore';
 import { slotInfo, useLibraryStore, useWorkingStateModified, type SlotInfo } from '../../store/library';
 import { CHANGED_SINCE_STORED, ChangedMarker, slotLabelSuffix } from '../slotLabels';
@@ -74,7 +74,7 @@ export function SlotsTab() {
       <div className="slot-map-head">
         <span>Slot Map · PC 1–{SLOTS.length}</span>
         <span>
-          <span className="slot-key" aria-hidden="true" /> Toggle Slots 1–2
+          <span className="slot-key" aria-hidden="true" /> Toggle Slots 1–{TOGGLE_SLOT_COUNT}
         </span>
         <span>
           <span className="slot-key is-stored" aria-hidden="true" /> Stored

@@ -1,4 +1,4 @@
-import { SLOTS, isToggleSlot, slotNumber, slotReach, slotReachShort } from '../model/slots';
+import { SLOTS, TOGGLE_SLOT_COUNT, isToggleSlot, slotNumber, slotReach, slotReachShort } from '../model/slots';
 import { useEditorStore } from '../store/editorStore';
 import { slotInfo, useLibraryStore, type SlotInfo } from '../store/library';
 import { ChangedMarker, slotLabelSuffix } from './slotLabels';
@@ -61,7 +61,7 @@ export function SlotRail() {
           )),
         )}
       </div>
-      <h2 className="rail-title">Slots 5–{SLOTS.length} · PC</h2>
+      <h2 className="rail-title">Slots {TOGGLE_SLOT_COUNT + 1}–{SLOTS.length} · PC</h2>
       <div className="slot-list">
         {SLOTS.filter((s) => !isToggleSlot(s)).map((slot) =>
           button(slot, 'slot-row', (info) => (

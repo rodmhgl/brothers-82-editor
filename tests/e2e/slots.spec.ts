@@ -8,28 +8,43 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('the rail and the Slot grid show the two Toggle Slots and no Bank; a Toggle Slot with no Slot Map entry recalls as Unknown', async ({ page }) => {
+test('the rail and the Slot grid show the four Toggle Slots, 3 and 4 behind the Bank dip; a Toggle Slot with no Slot Map entry recalls as Unknown', async ({ page }) => {
   await page.goto('/');
+  const connection = page.getByRole('banner', { name: 'Connection' });
   const rail = page.getByRole('navigation', { name: 'Slots' });
   const drawer = page.getByRole('complementary', { name: 'Data' });
-  const syncStatus = page.getByRole('banner', { name: 'Connection' }).getByLabel('Sync Status');
+  const syncStatus = connection.getByLabel('Sync Status');
 
-  await expect(rail.getByRole('button', { name: /Toggle/ })).toHaveText([/^01 · Toggle R/, /^02 · Toggle L/]);
+  await expect(rail.getByRole('button', { name: /Toggle/ })).toHaveText([/^01 · Toggle R/, /^02 · Toggle L/, /^03 · Bank · L/, /^04 · Bank · R/]);
   await expect(rail.getByRole('button', { name: 'Recall Slot 1 · Toggle Right' })).toBeVisible();
   await expect(rail.getByRole('button', { name: 'Recall Slot 2 · Toggle Left' })).toBeVisible();
-  await expect(rail.getByRole('button', { name: 'Recall Slot 3 · MIDI only' })).toBeVisible();
+  await expect(rail.getByRole('button', { name: 'Recall Slot 3 · Bank · Toggle Left' })).toBeVisible();
+  await expect(rail.getByRole('button', { name: 'Recall Slot 4 · Bank · Toggle Right' })).toBeVisible();
+  await expect(rail.getByRole('heading', { name: 'Slots 5–122 · PC' })).toBeVisible();
+  await expect(rail.getByRole('button', { name: 'Recall Slot 5 · MIDI only' })).toBeVisible();
 
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('tab', { name: 'Slots' }).click();
-  await expect(drawer.getByRole('button', { name: /Toggle/ })).toHaveCount(2);
-  await expect(drawer.getByRole('button', { name: 'Slot 1 · Toggle Right' })).toBeVisible();
-  await expect(drawer.getByRole('button', { name: 'Slot 2 · Toggle Left' })).toBeVisible();
-  await expect(drawer.getByText('Toggle Slots 1–2')).toBeVisible();
-  await expect(page.getByText(/Bank/)).toHaveCount(0);
+  const grid = drawer.getByRole('group', { name: 'Slot Map' });
+  await expect(grid.getByRole('button')).toHaveCount(122);
+  await expect(grid.getByRole('button', { name: /Toggle/ })).toHaveCount(4);
+  await expect(grid.getByRole('button', { name: 'Slot 1 · Toggle Right' })).toBeVisible();
+  await expect(grid.getByRole('button', { name: 'Slot 2 · Toggle Left' })).toBeVisible();
+  await expect(grid.getByRole('button', { name: 'Slot 3 · Bank · Toggle Left' })).toBeVisible();
+  await expect(grid.getByRole('button', { name: 'Slot 4 · Bank · Toggle Right' })).toBeVisible();
+  await expect(drawer.getByText('Toggle Slots 1–4')).toBeVisible();
+  await grid.getByRole('button', { name: 'Slot 4 · Bank · Toggle Right' }).click();
+  await expect(drawer.getByRole('region', { name: 'Selected Slot' }).getByText('Slot 04 · Bank · Toggle Right')).toBeVisible();
+  await expect(connection.getByText('04 · Bank · Toggle Right')).toBeVisible();
 
+  // No Slot is special: a Toggle Slot the editor hasn't stored to is Unknown, Bank or not.
   await page.getByRole('button', { name: 'Send All', exact: true }).click();
   await expect(syncStatus).toHaveText('In Sync');
   await rail.getByRole('button', { name: 'Recall Slot 1 · Toggle Right' }).click();
+  await expect(syncStatus).toHaveText('Unknown');
+  await page.getByRole('button', { name: 'Send All', exact: true }).click();
+  await expect(syncStatus).toHaveText('In Sync');
+  await rail.getByRole('button', { name: 'Recall Slot 3 · Bank · Toggle Left' }).click();
   await expect(syncStatus).toHaveText('Unknown');
 });
 
