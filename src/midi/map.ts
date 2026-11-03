@@ -162,6 +162,9 @@ export type PerformanceParamId = {
 /** Effect Order's 2+1 position, as the Working State holds it. */
 export const EFFECT_ORDER_PARALLEL = PARAMS.effectOrder.values[1]!.value;
 
+/** Amp Type's Solo position, the voicing Contour 2 and Presence 2 work the other way round for. */
+export const AMP_TYPE_SOLO = PARAMS.ampType.values[2]!.value;
+
 /** The Expression / CV target dip for each knob (CC 61–66). */
 export const TARGET_DIPS: Partial<Record<PresetParamId, PresetParamId>> = {
   vol1: 'volume1Target',

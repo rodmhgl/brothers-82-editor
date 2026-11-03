@@ -77,7 +77,7 @@ describe('describeControl reads the context a control is in', () => {
 
     const both = describeControl('vol1', withWorking({ ...masterOn, channel2Bypass: 127, effectOrder: 3 }));
     expect(both.meaning).toBe('50% · Stack mix');
-    expect(both.description).toContain('Both Channels are on, so it mixes the stack, and how depends on Effect Order (now 2<1).');
+    expect(both.description).toContain('Both Channels are on, so Vol 1 mixes the stack, and how depends on Effect Order (now 2<1).');
 
     expect(describeControl('vol1', withWorking({ master: 0 })).meaning).toBe('50%');
   });
@@ -97,7 +97,7 @@ describe('describeControl reads the context a control is in', () => {
     for (const id of ['gateThreshold', 'gateRelease'] as const) {
       const off = describeControl(id, withWorking({ noiseGate: 0 }));
       expect(off.meaning, id).toBe('50% · No effect');
-      expect(off.description, id).toContain('Noise Gate is off, so this has no effect until the Noise Gate dip is on.');
+      expect(off.description, id).toContain('Noise Gate is off, so this has no effect right now.');
       expect(describeControl(id, withWorking({ noiseGate: 127 })).meaning, id).toBe('50%');
     }
   });
@@ -106,10 +106,10 @@ describe('describeControl reads the context a control is in', () => {
     const state = withWorking({});
     const none = describeControl('expression', state);
     expect(none.meaning).toBe('0% · No targets');
-    expect(none.description).toContain('No target dip is on, so right now it moves nothing.');
+    expect(none.description).toContain('No target dip is on right now.');
 
     const withTarget = describeControl('expression', withWorking({ gain1Target: 127 }));
     expect(withTarget.meaning).toBe('0%');
-    expect(withTarget.description).not.toContain('moves nothing');
+    expect(withTarget.description).not.toContain('No target dip');
   });
 });

@@ -27,4 +27,4 @@ With Master on, set the loudness with Vol 2, and use Vol 1 to shape the mix when
 
 ### Reading the help cards
 
-The help card for each control follows these settings. Vol 1 says when Master leaves it with no effect or makes it a stack mix control, Clean 1 says when it is a clean blend, and Contour 2 and Presence 2 describe what they do for the current Amp Type.
+Each control's help card follows these settings, so point at a control to see what it does right now.
