@@ -23,18 +23,17 @@ async function unnamedControls(page: Page) {
 test('the editor works from the keyboard alone', async ({ page }) => {
   await open(page);
   const connection = page.getByRole('banner', { name: 'Connection' });
-  const editor = page.getByRole('region', { name: 'Editor' });
   const log = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log');
   const drawer = page.getByRole('complementary', { name: 'Data' });
   const lastSent = log.getByRole('listitem').last();
 
   // Knobs move with the arrow keys.
-  const gateRelease = editor.getByRole('region', { name: 'Hidden Options' }).getByRole('slider', { name: 'Gate Release' });
+  const gateRelease = page.getByRole('group', { name: 'Hidden Options' }).getByRole('slider', { name: 'Gate Release' });
   await gateRelease.focus();
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowUp');
   await expect(gateRelease).toHaveAttribute('aria-valuenow', '66');
-  await expect(lastSent).toHaveText('CC 27 = 66 → Gate Release');
+  await expect(lastSent).toHaveText(/^CC 27 = 66 → Gate Release/);
 
   await page.keyboard.press('Control+Z');
   await expect(gateRelease).toHaveAttribute('aria-valuenow', '65');

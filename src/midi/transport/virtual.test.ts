@@ -92,7 +92,7 @@ describe('Virtual Pedal: Brothers 82 controls', () => {
     expect(pedal.getSnapshot().log.map((e) => e.text)).toEqual([
       'CC 103 = 0 → Channel 2 Bypass → Bypassed',
       'CC 102 = 1 → Channel 1 Bypass → Engaged',
-      'CC 72 = 64 → Clean 1 → On',
+      'CC 72 = 64 → Clean 1 → On · Clean 1 with 2+1: Channel 1 is now a clean blend',
       'CC 67 = 1 → Sweep → T',
     ]);
   });
@@ -140,6 +140,80 @@ describe('Virtual Pedal: Brothers 82 controls', () => {
       'PC 1 → recall Slot 1 → empty, nothing changes',
       'PC 5 on MIDI channel 5 → ignored (pedal listens on MIDI channel 2)',
     ]);
+  });
+});
+
+describe('Virtual Pedal: log notes (SPEC.md §5.3)', () => {
+  /** The log after sending these CCs on the pedal's MIDI channel. */
+  const logAfter = (...ccs: [cc: number, value: number][]) => {
+    const pedal = createVirtualPedal();
+    ccs.forEach(([cc, value]) => pedal.send([0xb1, cc, value]));
+    return pedal.getSnapshot().log.map((e) => e.text);
+  };
+
+  it('notes what Master does when it turns on, and only then', () => {
+    expect(logAfter([77, 127], [77, 127], [77, 0])).toEqual([
+      'CC 77 = 127 → Master → On · Master: Vol 2 now sets the overall output volume',
+      'CC 77 = 127 → Master → On',
+      'CC 77 = 0 → Master → Off',
+    ]);
+  });
+
+  it('notes a clean boost when Clean 1 turns on outside 2+1', () => {
+    expect(logAfter([22, 1], [72, 127]).at(-1)).toBe('CC 72 = 127 → Clean 1 → On · Clean 1: Channel 1 is now a clean boost');
+  });
+
+  it('notes a clean blend when Clean 1 turns on at 2+1', () => {
+    expect(logAfter([72, 127])).toEqual(['CC 72 = 127 → Clean 1 → On · Clean 1 with 2+1: Channel 1 is now a clean blend']);
+  });
+
+  it('notes the change when Effect Order moves Clean 1 between boost and blend', () => {
+    expect(logAfter([72, 127], [22, 1], [22, 3], [22, 2]).slice(1)).toEqual([
+      'CC 22 = 1 → Effect Order → 2>1 · Clean 1: Channel 1 is now a clean boost',
+      'CC 22 = 3 → Effect Order → 2<1',
+      'CC 22 = 2 → Effect Order → 2+1 · Clean 1 with 2+1: Channel 1 is now a clean blend',
+    ]);
+  });
+
+  it('adds no Clean 1 note to Effect Order while Clean 1 is off', () => {
+    expect(logAfter([22, 1], [22, 2])).toEqual(['CC 22 = 1 → Effect Order → 2>1', 'CC 22 = 2 → Effect Order → 2+1']);
+  });
+
+  it('notes that Gate Threshold and Gate Release have no effect while Noise Gate is off', () => {
+    expect(logAfter([29, 10], [27, 20])).toEqual([
+      'CC 29 = 10 → Gate Threshold · Gate Threshold/Gate Release have no effect while Noise Gate is off',
+      'CC 27 = 20 → Gate Release · Gate Threshold/Gate Release have no effect while Noise Gate is off',
+    ]);
+  });
+
+  it('adds no gate note once Noise Gate is on, or to a CC that changes nothing', () => {
+    expect(logAfter([29, 64], [71, 127], [29, 10], [27, 20])).toEqual([
+      'CC 29 = 64 → Gate Threshold',
+      'CC 71 = 127 → Noise Gate → On',
+      'CC 29 = 10 → Gate Threshold',
+      'CC 27 = 20 → Gate Release',
+    ]);
+  });
+
+  it('notes that Expression has no target dips on', () => {
+    expect(logAfter([100, 40])).toEqual(['CC 100 = 40 → Expression · Expression: no target dips on']);
+  });
+
+  it('does not count Sweep and Polarity as target dips', () => {
+    expect(logAfter([67, 127], [68, 127], [100, 40]).at(-1)).toBe('CC 100 = 40 → Expression · Expression: no target dips on');
+  });
+
+  it.each([61, 62, 63, 64, 65, 66])('adds no Expression note with target dip CC %i on', (cc) => {
+    expect(logAfter([cc, 127], [100, 40]).at(-1)).toBe('CC 100 = 40 → Expression');
+  });
+
+  it('adds no note to a recalled Slot', () => {
+    const pedal = createVirtualPedal();
+    [[77, 127], [72, 127], [111, 9], [77, 0], [72, 0]].forEach(([cc, value]) => pedal.send([0xb1, cc!, value!]));
+
+    pedal.send([0xc1, 9]);
+
+    expect(pedal.getSnapshot().log.at(-1)?.text).toBe('PC 9 → recall Slot 9');
   });
 });
 

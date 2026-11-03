@@ -407,7 +407,7 @@ describe('Performance Controls', () => {
     for (let v = 0; v <= 50; v += 10) setParam('expression', v);
     await vi.advanceTimersByTimeAsync(5);
 
-    expect(virtualPedal.getSnapshot().log.map((e) => e.text)).toEqual(['CC 100 = 0 → Expression', 'CC 100 = 50 → Expression']);
+    expect(virtualPedal.getSnapshot().log.map((e) => e.text)).toEqual(['CC 100 = 0 → Expression', 'CC 100 = 50 → Expression · Expression: no target dips on']);
     expect(useEditorStore.getState().editor.performance.expression).toBe(50);
     expect(useEditorStore.getState().editor.working).toBe(working);
   });

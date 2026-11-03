@@ -2,7 +2,7 @@ import { readMessage } from '../../model/pedalReading';
 import { defaultPedalState, defaultWorkingState, type PedalState, type WorkingState } from '../../model/state';
 import { decode } from '../decode';
 import type { MidiMessage } from '../encode';
-import { DEFAULT_MIDI_CHANNEL, PARAMS, settingLabel, type ParamDef, type PresetParamId } from '../map';
+import { DEFAULT_MIDI_CHANNEL, EFFECT_ORDER_PARALLEL, PARAMS, TARGET_DIPS, isOn, settingLabel, type ParamDef, type ParamId, type PresetParamId } from '../map';
 import type { MidiPort, MidiTransport } from './types';
 
 export const VIRTUAL_PEDAL_PORT: MidiPort = { id: 'virtual-pedal', name: 'Virtual Pedal' };
@@ -22,6 +22,49 @@ export interface VirtualPedal extends MidiTransport {
 function settingNote(param: ParamDef, value: number): string {
   const setting = settingLabel(param, value);
   return setting ? ` → ${setting}` : '';
+}
+
+/** Whether a change of state earns a note. */
+type NoteTrigger = (before: PedalState, after: PedalState) => boolean;
+
+/** A note's trigger: the dip `id` has just turned on. */
+const turnedOn = (id: PresetParamId): NoteTrigger => (before, after) => !isOn(before[id]) && isOn(after[id]);
+/** A note's trigger: `id`, a control that needs something else to work, has just moved without it. */
+const movedWhile = (id: ParamId, condition: (state: PedalState) => boolean): NoteTrigger => (before, after) =>
+  before[id] !== after[id] && condition(after);
+
+const noiseGateOff = (state: PedalState) => !isOn(state.noiseGate);
+const noTargetDipsOn = (state: PedalState) => !Object.values(TARGET_DIPS).some((dip) => isOn(state[dip]));
+
+const GATE_NOTE = 'Gate Threshold/Gate Release have no effect while Noise Gate is off';
+
+type Clean1Role = 'boost' | 'blend';
+
+/** What Clean 1 makes of Channel 1: a clean blend at 2+1, otherwise a clean boost, or nothing while it's off. */
+function clean1Role(state: PedalState): Clean1Role | undefined {
+  if (!isOn(state.clean1)) return undefined;
+  return state.effectOrder === EFFECT_ORDER_PARALLEL ? 'blend' : 'boost';
+}
+
+/** A note's trigger: Clean 1 has just become `role`, by the dip or by Effect Order. */
+const becameClean1 = (role: Clean1Role): NoteTrigger => (before, after) =>
+  clean1Role(before) !== role && clean1Role(after) === role;
+
+/** What a message did beyond setting its control, noted when it starts to apply (SPEC.md §5.3). */
+const NOTES: { applies: NoteTrigger; text: string }[] = [
+  { applies: becameClean1('boost'), text: 'Clean 1: Channel 1 is now a clean boost' },
+  { applies: becameClean1('blend'), text: 'Clean 1 with 2+1: Channel 1 is now a clean blend' },
+  { applies: turnedOn('master'), text: 'Master: Vol 2 now sets the overall output volume' },
+  { applies: movedWhile('gateThreshold', noiseGateOff), text: GATE_NOTE },
+  { applies: movedWhile('gateRelease', noiseGateOff), text: GATE_NOTE },
+  { applies: movedWhile('expression', noTargetDipsOn), text: 'Expression: no target dips on' },
+];
+
+/** The notes a change of state earns, e.g. " · Master: Vol 2 now sets…"; nothing if none apply. */
+function logNotes(before: PedalState, after: PedalState): string {
+  return NOTES.filter((n) => n.applies(before, after))
+    .map((n) => ` · ${n.text}`)
+    .join('');
 }
 
 const PRESET_PARAM_IDS = Object.keys(defaultWorkingState()) as PresetParamId[];
@@ -85,7 +128,7 @@ export function createVirtualPedal(midiChannel = DEFAULT_MIDI_CHANNEL): VirtualP
         case 'param': {
           const param: ParamDef = PARAMS[reading.id];
           state = { ...state, [reading.id]: reading.value };
-          text = `${what} → ${param.label}${settingNote(param, reading.value)}`;
+          text = `${what} → ${param.label}${settingNote(param, reading.value)}${logNotes(snapshot.state, state)}`;
           break;
         }
         case 'unmapped':

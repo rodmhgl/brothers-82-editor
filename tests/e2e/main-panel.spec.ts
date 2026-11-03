@@ -211,6 +211,6 @@ test('Expression sends live', async ({ page }) => {
   const last = page.getByRole('region', { name: 'Virtual Pedal' }).getByRole('log').getByRole('listitem').last();
 
   await performance.getByRole('slider', { name: 'Expression' }).fill('90');
-  await expect(last).toHaveText('CC 100 = 90 → Expression');
+  await expect(last).toHaveText('CC 100 = 90 → Expression · Expression: no target dips on');
   await expect(performance.getByText('90', { exact: true })).toBeVisible();
 });

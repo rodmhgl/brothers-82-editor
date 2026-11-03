@@ -563,14 +563,8 @@ button:disabled {
 
 /* ── Main panel ─────────────────────────────────────────────────────── */
 
-.console-column {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
 .main-panel {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -640,18 +634,6 @@ button:disabled {
 
 .main-footswitches > .footswitch:last-child {
   grid-column: 3;
-}
-
-/* ── Hidden Options ─────────────────────────────────────────────────── */
-
-.hidden-options-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  /* A small knob's label sits beside it, so the discs line up only from the left. */
-  justify-items: start;
-  align-items: start;
-  gap: 14px;
-  margin-top: 12px;
 }
 
 /* ── Footswitches ───────────────────────────────────────────────────── */
@@ -962,9 +944,8 @@ button:disabled {
 .dip-card {
   padding: 14px 18px;
   display: flex;
-  gap: 20px;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .dip-bank {
@@ -974,8 +955,8 @@ button:disabled {
 }
 
 .dip-bank + .dip-bank {
-  border-left: 1px solid var(--ink);
-  padding-left: 20px;
+  border-top: 1px solid var(--ink);
+  padding-top: 14px;
 }
 
 .dip-bank-title {
@@ -1035,6 +1016,26 @@ button:disabled {
 
 .dip-switch[aria-checked='true'] .dip-switch-label {
   color: var(--ink);
+}
+
+/* ── Hidden Options ─────────────────────────────────────────────────── */
+
+.hidden-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-right: 8px;
+}
+
+.hidden-options-knobs {
+  display: flex;
+  gap: 12px;
+}
+
+.hidden-options-note {
+  margin: 0;
+  font: 500 9px var(--font-mono);
+  color: var(--muted);
 }
 
 /* ── Global Settings ────────────────────────────────────────────────── */

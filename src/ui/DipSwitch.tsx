@@ -5,7 +5,7 @@ type Props = {
   param: ParamDef;
   value: number;
   onChange(value: number): void;
-  /** The short printed label, e.g. "L MOD"; Sweep and Polarity add their B/T, F/R setting. */
+  /** The short printed label, e.g. "Clean 1"; Sweep and Polarity add their B/T, F/R setting. */
   short: string;
 };
 

@@ -7,7 +7,6 @@ import { ControlHelpTip } from './help/ControlHelpTip';
 import { useLayoutScale } from './layoutScale';
 import { DipPanel } from './panels/DipPanel';
 import { GlobalSettingsPanel } from './panels/GlobalSettingsPanel';
-import { HiddenOptionsPanel } from './panels/HiddenOptionsPanel';
 import { MainPanel } from './panels/MainPanel';
 import { PerformancePanel } from './panels/PerformancePanel';
 import { SlotRail } from './SlotRail';
@@ -37,10 +36,7 @@ export function App() {
         <main className="main-column">
           <WebMidiNote />
           <section className="console" aria-label="Editor">
-            <div className="console-column">
-              <MainPanel state={working} setParam={setParam} />
-              <HiddenOptionsPanel state={working} setParam={setParam} />
-            </div>
+            <MainPanel state={working} setParam={setParam} />
             <PerformancePanel />
           </section>
           <DipPanel state={working} setParam={setParam} />

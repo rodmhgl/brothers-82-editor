@@ -159,6 +159,9 @@ export type PerformanceParamId = {
   [K in ParamId]: (typeof PARAMS)[K]['scope'] extends 'performance' ? K : never;
 }[ParamId];
 
+/** Effect Order's 2+1 position, as the Working State holds it. */
+export const EFFECT_ORDER_PARALLEL = PARAMS.effectOrder.values[1]!.value;
+
 /** The Expression / CV target dip for each knob (CC 61–66). */
 export const TARGET_DIPS: Partial<Record<PresetParamId, PresetParamId>> = {
   vol1: 'volume1Target',
