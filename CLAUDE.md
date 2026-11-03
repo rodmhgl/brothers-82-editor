@@ -28,3 +28,10 @@ Default labels: needs-triage, needs-info, ready-for-agent, ready-for-human, wont
 ### Domain docs
 
 Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## Parallel work in worktrees
+
+Several agents may work issues at once, each in its own git worktree under `.claude/worktrees/` on its own branch.
+
+- **Do not run `npm run e2e` in a worktree.** Playwright serves on fixed ports 4173/4174 and reuses any server already listening (`reuseExistingServer` outside CI), so a local run can silently test another worktree's build. Run `npm run typecheck` and `npm test` locally; CI runs e2e on the PR.
+- Push the issue branch and open a PR that closes the issue; never push to `main` from a worktree.
