@@ -1,30 +1,35 @@
-/* Paper theme, the default. The other themes below swap only these colour tokens (SPEC.md §5.11 settings). */
+/* Manual Cream theme, the default. The other themes below swap only these colour tokens (SPEC.md §5.11 settings).
+   Every theme is drawn from the Brothers AM manual's plum #5b2543, pink #e97281, amber #f9b410 and cream #fef1e3,
+   deepened or lightened where needed to stay readable (themes.test.ts). */
 :root {
-  --paper: #f3efe6;
-  --card: #fbf8f1;
-  --inset: #ece7db;
-  --track: #e6dfd0;
-  --rule-light: #d4ccbb;
-  --row-rule: #e2dbcc;
-  --border-soft: #bfb6a3;
-  --muted-2: #b5ad9c;
-  --muted: #6f6a60;
-  --text-2: #4a463f;
-  --ink: #1d1b17;
-  --accent: oklch(0.6 0.11 195);
+  --paper: #fef1e3;
+  --card: #fff8ef;
+  --inset: #f6e5d3;
+  --track: #efdcc8;
+  --rule-light: #e3cdb8;
+  --row-rule: #f1e0ce;
+  --border-soft: #cdb5a4;
+  --muted-2: #bba59a;
+  --muted: #6e5a62;
+  --text-2: #4a2e3c;
+  --ink: #2e0f22;
+  /* Amber, deepened so it shows against cream and the ink reads on it. */
+  --accent: #bd7900;
   /* The dips and the active Toggle Slot. Themes with one accent set it to --accent. */
   --accent-2: var(--accent);
-  --warning: oklch(0.55 0.16 30);
-  --empty-slot: #e9e3d6;
+  /* Text on the accent: an armed button, a Toggle Slot. */
+  --on-accent: var(--ink);
+  --warning: #b02a48;
+  --empty-slot: #f5e4d3;
 
   --font-sans: 'Archivo Variable', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
-  --disc-hi: #fffdf8;
+  --disc-hi: #fffcf7;
   --disc-inset: rgba(255, 255, 255, 0.9);
-  --shadow-knob: 0 6px 12px rgba(60, 40, 10, 0.18);
-  --shadow-drawer: -14px 0 32px rgba(60, 40, 10, 0.16);
-  --backdrop: rgba(29, 27, 23, 0.4);
+  --shadow-knob: 0 6px 12px rgba(70, 20, 45, 0.18);
+  --shadow-drawer: -14px 0 32px rgba(70, 20, 45, 0.16);
+  --backdrop: rgba(46, 15, 34, 0.4);
 
   --top-bar-height: 52px;
   /* The window in the layout's own px: viewport units ignore the page zoom, so would overflow when it is above 100%. */
@@ -37,64 +42,68 @@
   color: var(--ink);
 }
 
-/* The other themes, from the manuals' charcoal #353839, cream #fff2e8, green #77bc44, teal #33bcc5 and orange #ff481b. */
-:root[data-theme='cream'] {
-  --paper: #fff2e8;
-  --card: #fffaf1;
-  --inset: #f6e6d8;
-  --track: #efdccc;
-  --rule-light: #e2cdbc;
-  --row-rule: #f0dfd1;
-  --border-soft: #cdb8a6;
-  --muted-2: #bba796;
-  --muted: #6b625c;
-  --text-2: #43454b;
-  --ink: #353839;
-  --accent: #77bc44;
-  --warning: #cc3712;
-  --empty-slot: #f4e3d5;
-  --disc-hi: #fffdf9;
-  --shadow-knob: 0 6px 12px rgba(80, 40, 20, 0.16);
-  --shadow-drawer: -14px 0 32px rgba(80, 40, 20, 0.14);
-}
-
-:root[data-theme='teal-mist'] {
-  --paper: #eef1ef;
-  --card: #f8faf9;
-  --inset: #e2e8e5;
-  --track: #d9e0dd;
-  --rule-light: #c9d2ce;
-  --row-rule: #dde3e0;
-  --border-soft: #aab5b0;
-  --muted-2: #a3aeaa;
-  --muted: #5d6663;
-  --text-2: #43454b;
-  --ink: #2d3030;
-  --accent: #33bcc5;
-  --warning: #d63a14;
-  --empty-slot: #e4e9e7;
+/* White as the manual's pages, with amber for on or active and pink for the dips. */
+:root[data-theme='page'] {
+  --paper: #fbf9f8;
+  --card: #ffffff;
+  --inset: #f4eef0;
+  --track: #ebe3e6;
+  --rule-light: #dccfd4;
+  --row-rule: #eee6e9;
+  --border-soft: #c4b3ba;
+  --muted-2: #b3a3aa;
+  --muted: #6a5a61;
+  --text-2: #4a2e3c;
+  --accent-2: #c4566a;
+  --warning: #a8233f;
+  --empty-slot: #f1eaed;
   --disc-hi: #ffffff;
-  --shadow-knob: 0 6px 12px rgba(20, 40, 40, 0.18);
-  --shadow-drawer: -14px 0 32px rgba(20, 40, 40, 0.16);
 }
 
-:root[data-theme='charcoal'] {
-  --paper: #2a2d2e;
-  --card: #353839;
-  --inset: #43454b;
-  --track: #3c3f42;
-  --rule-light: #55595b;
-  --row-rule: #404345;
-  --border-soft: #6a6e70;
-  --muted-2: #7c807f;
-  --muted: #a9aca7;
-  --text-2: #d9d6cf;
-  --ink: #fff2e8;
-  --accent: #77bc44;
-  --accent-2: #33bcc5;
-  --warning: #ff6a3d;
-  --empty-slot: #3d4042;
-  --disc-hi: #5d6163;
+/* Pink paper, with a deep pink accent that the cream reads on. */
+:root[data-theme='pink'] {
+  --paper: #fdeef0;
+  --card: #fff7f8;
+  --inset: #f7e0e4;
+  --track: #f0d3d9;
+  --rule-light: #e4c2c9;
+  --row-rule: #f3dde1;
+  --border-soft: #d0aab3;
+  --muted-2: #c09aa3;
+  --muted: #6e5560;
+  --text-2: #4a2e3c;
+  --accent: #b83a58;
+  --on-accent: #fff8ef;
+  --warning: #9a3b00;
+  --empty-slot: #f7e2e6;
+  --disc-hi: #fffafb;
+}
+
+/* Cream paper with the manual's plum as the accent, and amber for the dips. */
+:root[data-theme='plum-ink'] {
+  --accent: #5b2543;
+  --accent-2: #bd7900;
+  --on-accent: #fef1e3;
+}
+
+:root[data-theme='plum'] {
+  --paper: #2e1322;
+  --card: #3b1a2d;
+  --inset: #4a2439;
+  --track: #432033;
+  --rule-light: #5e3a4e;
+  --row-rule: #482538;
+  --border-soft: #77566a;
+  --muted-2: #8a6c7d;
+  --muted: #c4abb7;
+  --text-2: #e8d6dc;
+  --ink: #fef1e3;
+  --accent: #f9b410;
+  --accent-2: #e97281;
+  --on-accent: #2e1322;
+  --warning: #ff9a7a;
+  --empty-slot: #452235;
+  --disc-hi: #6a4459;
   --disc-inset: rgba(255, 255, 255, 0.12);
   --shadow-knob: 0 6px 14px rgba(0, 0, 0, 0.45);
   --shadow-drawer: -14px 0 32px rgba(0, 0, 0, 0.45);
@@ -103,47 +112,29 @@
   color-scheme: dark;
 }
 
-:root[data-theme='signal-orange'] {
-  --paper: #fff8f4;
-  --card: #ffffff;
-  --inset: #fbebe2;
-  --track: #f3e0d5;
-  --rule-light: #e8d3c7;
-  --row-rule: #f3e3da;
-  --border-soft: #cdb3a5;
-  --muted-2: #bba79c;
-  --muted: #6e625b;
-  --text-2: #43454b;
-  --ink: #353839;
-  --accent: #ff481b;
-  /* Deeper than the accent so a warning never reads as an LED. */
-  --warning: #a8231a;
-  --empty-slot: #f8e8df;
-  --disc-hi: #ffffff;
-  --shadow-knob: 0 6px 12px rgba(90, 30, 10, 0.16);
-  --shadow-drawer: -14px 0 32px rgba(90, 30, 10, 0.14);
-}
+:root[data-theme='amber-night'] {
+  --paper: #1d1518;
+  --card: #281e22;
+  --inset: #34282d;
+  --track: #2f2428;
+  --rule-light: #4a3c42;
+  --row-rule: #33282c;
+  --border-soft: #64545a;
+  --muted-2: #7a6970;
+  --muted: #b8a7ab;
+  --text-2: #e6d9d2;
+  --ink: #fef1e3;
+  --accent: #f9b410;
+  --on-accent: #1d1518;
+  --warning: #f08593;
+  --empty-slot: #30252a;
+  --disc-hi: #554449;
+  --disc-inset: rgba(255, 255, 255, 0.12);
+  --shadow-knob: 0 6px 14px rgba(0, 0, 0, 0.5);
+  --shadow-drawer: -14px 0 32px rgba(0, 0, 0, 0.5);
+  --backdrop: rgba(0, 0, 0, 0.6);
 
-/* Green is on or active, teal is the dips, orange is a warning. */
-:root[data-theme='three-lights'] {
-  --paper: #fffaf1;
-  --card: #ffffff;
-  --inset: #f1f0e8;
-  --track: #e7e5da;
-  --rule-light: #d6d3c6;
-  --row-rule: #ebe8dd;
-  --border-soft: #cbc9be;
-  --muted-2: #b4b2a7;
-  --muted: #686a66;
-  --text-2: #43454b;
-  --ink: #353839;
-  --accent: #77bc44;
-  --accent-2: #33bcc5;
-  --warning: #e03c12;
-  --empty-slot: #efede4;
-  --disc-hi: #ffffff;
-  --shadow-knob: 0 6px 12px rgba(40, 40, 30, 0.16);
-  --shadow-drawer: -14px 0 32px rgba(40, 40, 30, 0.14);
+  color-scheme: dark;
 }
 
 *,
@@ -439,7 +430,7 @@ button:disabled {
 .is-armed {
   background: var(--accent) !important;
   border-color: var(--ink) !important;
-  color: var(--ink) !important;
+  color: var(--on-accent) !important;
 }
 
 .connection-note {
@@ -1531,6 +1522,7 @@ button:disabled {
 
 .slot-cell.is-toggle {
   background: var(--accent);
+  color: var(--on-accent);
 }
 
 .slot-cell.is-stored {

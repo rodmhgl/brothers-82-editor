@@ -18,7 +18,7 @@ const saved: Session = {
     autoSendAll: false,
     sendThrottleMs: 10,
     knobSensitivity: 2,
-    theme: 'light',
+    theme: 'plum',
     uiScale: 150,
     showCcNumbers: false,
     confirmOverwrite: false,
