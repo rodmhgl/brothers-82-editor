@@ -38,7 +38,8 @@ test.describe('without folder access', () => {
     await expect(drawer.getByRole('button', { name: 'Choose folder…' })).toHaveCount(0);
     await expect(drawer.getByRole('status', { name: 'Back up your Library' })).toHaveCount(0);
     // No Factory Presets: a new Library starts empty.
-    await expect(presets.getByRole('listitem')).toHaveCount(0);
+    await expect(presets.getByRole('button', { name: /^Recall/ })).toHaveCount(0);
+    await expect(presets.getByRole('listitem')).toHaveText('No Presets in this Library yet.');
 
     await editor.getByRole('slider', { name: 'Vol 1', exact: true }).press('PageUp');
     await saveAs(page, 'Shimmer Tape');

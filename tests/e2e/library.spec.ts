@@ -43,7 +43,8 @@ test('save, edit and recall round-trip the Working State and the Virtual Pedal',
   await expect(drawer.getByText('Folder · My Presets')).toBeVisible();
   await expect(workingState).toHaveText('Untitled');
   // No Factory Presets: a new Library starts empty.
-  await expect(presets.getByRole('listitem')).toHaveCount(0);
+  await expect(presets.getByRole('button', { name: /^Recall/ })).toHaveCount(0);
+  await expect(presets.getByRole('listitem')).toHaveText('No Presets in this folder yet.');
 
   // Edit, then Save: the Working State has no Preset yet, so Save asks for a name.
   await ampType.getByRole('radio', { name: '800' }).check();
