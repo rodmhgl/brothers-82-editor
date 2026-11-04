@@ -94,7 +94,7 @@ describe('parseSession', () => {
 
   it('falls back to the default theme for a theme from an older build', () => {
     for (const theme of ['light', 'charcoal', 'teal-mist']) {
-      expect(parseSession({ ...stored(saved), settings: { ...saved.settings, theme } })!.settings.theme).toBe('cream');
+      expect(parseSession({ ...stored(saved), settings: { ...saved.settings, theme } })!.settings.theme).toBe(DEFAULT_SETTINGS.theme);
     }
   });
 

@@ -54,8 +54,24 @@ describe('themes', () => {
   it('offers six, each with its own palette in app.css', () => {
     expect(THEME_IDS).toHaveLength(6);
     for (const theme of THEME_IDS) {
-      if (theme !== DEFAULT_SETTINGS.theme) expect(declarations(`:root[data-theme='${theme}']`), theme).toBeDefined();
+      // Manual Cream is the :root palette the others build on.
+      if (theme !== 'cream') expect(declarations(`:root[data-theme='${theme}']`), theme).toBeDefined();
     }
+  });
+
+  it('defaults to Amber Night', () => {
+    expect(DEFAULT_SETTINGS.theme).toBe('amber-night');
+  });
+
+  // Before the editor has loaded its settings, the page, the title bar and an installed app all show the default.
+  it('paints the default before the editor loads', () => {
+    const paper = tokensOf(DEFAULT_SETTINGS.theme)['--paper'];
+    const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+    const vite = readFileSync(new URL('../../vite.config.ts', import.meta.url), 'utf8');
+    expect(html).toContain(`<html lang="en" data-theme="${DEFAULT_SETTINGS.theme}">`);
+    expect(html).toContain(`<meta name="theme-color" content="${paper}" />`);
+    expect(vite).toContain(`theme_color: '${paper}'`);
+    expect(vite).toContain(`background_color: '${paper}'`);
   });
 
   // Amber's hues, between orange (about 30°) and yellow-orange (about 50°).

@@ -1,4 +1,4 @@
-/* Manual Cream theme, the default. The other themes below swap only these colour tokens (SPEC.md §5.11 settings).
+/* Manual Cream theme, the base palette: Amber Night is the default (session.ts). The other themes below swap only these colour tokens (SPEC.md §5.11 settings).
    Every theme is drawn from the Brothers AM manual's plum #5b2543, pink #e97281, amber #f9b410 and cream #fef1e3,
    deepened or lightened where needed to stay readable (themes.test.ts). */
 :root {

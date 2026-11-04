@@ -111,7 +111,9 @@ test('a theme recolours the editor at once and is kept between sessions', async 
   const paper = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   const themeColor = page.locator('meta[name="theme-color"]');
 
-  expect(await paper()).toBe('rgb(254, 241, 227)');
+  // Amber Night, the default.
+  expect(await paper()).toBe('rgb(29, 21, 24)');
+  await expect(themeColor).toHaveAttribute('content', '#1d1518');
   await page.getByRole('button', { name: /^Data/ }).click();
   await drawer.getByRole('tab', { name: 'Settings' }).click();
   await drawer.getByLabel('Theme').selectOption('Plum Night (dark)');
