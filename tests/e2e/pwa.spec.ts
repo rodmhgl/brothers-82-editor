@@ -16,8 +16,8 @@ test('serves a manifest that makes the editor installable under the project path
     display: 'standalone',
     start_url: './',
     scope: './',
-    theme_color: '#fef1e3',
-    background_color: '#fef1e3',
+    theme_color: '#1d1518',
+    background_color: '#1d1518',
   });
   expect(manifest.icons).toEqual(
     expect.arrayContaining([

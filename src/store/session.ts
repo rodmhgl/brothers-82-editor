@@ -10,7 +10,7 @@ import type { WorkingSource } from './library';
 // What the editor keeps between sessions (SPEC.md §5.11), and how it reads it back: anything stored may be from an
 // older build or damaged, so every field is checked and falls back to its default.
 
-/** The palettes the editor can be shown in, each named for the Settings tab. `cream` is the default. */
+/** The palettes the editor can be shown in, each named for the Settings tab. `amber-night` is the default. */
 export const THEMES = {
   cream: 'Manual Cream',
   page: 'Manual Page',
@@ -52,7 +52,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSendAll: true,
   sendThrottleMs: 2,
   knobSensitivity: 1,
-  theme: 'cream',
+  theme: 'amber-night',
   uiScale: 100,
   showCcNumbers: true,
   confirmOverwrite: true,
